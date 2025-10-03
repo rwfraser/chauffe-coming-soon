@@ -1,6 +1,6 @@
-# Chauffe.com Coming Soon Page
+# MyChauffe.com Coming Soon Page
 
-A modern, responsive "Coming Soon" page for chauffe.com built with HTML, CSS, and JavaScript.
+A modern, responsive "Coming Soon" page for mychauffe.com built with HTML, CSS, and JavaScript.
 
 ## Features
 
@@ -44,4 +44,4 @@ The app will be available at the configured domain.
 
 ## License
 
-© 2025 Chauffe. All rights reserved.
+© 2025 My Chauffe. All rights reserved.
