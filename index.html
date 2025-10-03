@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chauffe - Coming Soon</title>
+    <meta name="description" content="Something exciting is coming to chauffe.com. Stay tuned for our launch!">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <div class="logo">
+                <h1>Chauffe</h1>
+            </div>
+            
+            <div class="main-content">
+                <h2>Something exciting is brewing</h2>
+                <p class="subtitle">We're working hard to bring you something amazing. Stay tuned for our launch!</p>
+                
+                <div class="coming-soon-badge">
+                    <span>Coming Soon</span>
+                </div>
+            </div>
+            
+            <div class="notify-section">
+                <p>Want to be the first to know when we launch?</p>
+                <div class="email-form">
+                    <input type="email" placeholder="Enter your email address" id="email">
+                    <button onclick="notifyMe()">Notify Me</button>
+                </div>
+                <p class="form-message" id="message"></p>
+            </div>
+        </div>
+        
+        <div class="background-animation">
+            <div class="circle circle-1"></div>
+            <div class="circle circle-2"></div>
+            <div class="circle circle-3"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Chauffe. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function notifyMe() {
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message');
+            
+            if (!email) {
+                message.textContent = 'Please enter your email address';
+                message.style.color = '#ff6b6b';
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                message.textContent = 'Please enter a valid email address';
+                message.style.color = '#ff6b6b';
+                return;
+            }
+            
+            message.textContent = 'Thanks! We\'ll notify you when we launch.';
+            message.style.color = '#4ecdc4';
+            document.getElementById('email').value = '';
+        }
+        
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        // Enter key support for email form
+        document.getElementById('email').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                notifyMe();
+            }
+        });
+    </script>
+</body>
+</html>
