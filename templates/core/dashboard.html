@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome to your Dashboard, {{ user.username }}!</h1>
+            <p class="dashboard-subtitle">You're part of the exclusive early access community</p>
+        </div>
+        
+        <div class="dashboard-content">
+            <div class="dashboard-cards">
+                <div class="dashboard-card">
+                    <h3>🚀 Early Access Status</h3>
+                    <p>You have exclusive early access to My Chauffe features as they become available.</p>
+                    <div class="status-badge active">Active</div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <h3>📊 Your Account</h3>
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
+                    <p><strong>Last Login:</strong> {{ user.last_login|date:"M d, Y H:i" }}</p>
+                </div>
+                
+                <div class="dashboard-card">
+                    <h3>🎯 Coming Soon</h3>
+                    <p>We're working on exciting new features. Stay tuned for updates and new functionality!</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 45%"></div>
+                    </div>
+                    <small>Development Progress: 45%</small>
+                </div>
+                
+                <div class="dashboard-card">
+                    <h3>💬 Community</h3>
+                    <p>Connect with other early access members and share your feedback.</p>
+                    <button class="btn secondary" disabled>Community Forum (Coming Soon)</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-actions">
+            <a href="{% url 'accounts:profile' %}" class="btn primary">Edit Profile</a>
+            <a href="{% url 'core:home' %}" class="btn secondary">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - My Chauffe{% endblock %}
+
+{% block content %}
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Your Profile</h1>
+            <p class="dashboard-subtitle">Manage your account settings</p>
+        </div>
+        
+        <div class="profile-content">
+            <div class="profile-card">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <div class="avatar-circle">
+                            {{ user.username|first|upper }}
+                        </div>
+                    </div>
+                    
+                    <div class="profile-details">
+                        <h2>{{ user.username }}</h2>
+                        {% if user.email %}
+                            <p class="profile-email">{{ user.email }}</p>
+                        {% endif %}
+                        <p class="profile-joined">Member since {{ user.date_joined|date:"F Y" }}</p>
+                    </div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <h3>{{ user.date_joined|timesince }}</h3>
+                        <p>Time as member</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Early Access</h3>
+                        <p>Account Type</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <div class="action-card">
+                    <h3>Account Settings</h3>
+                    <p>Update your account information and preferences</p>
+                    <button class="btn secondary" disabled>Edit Settings (Coming Soon)</button>
+                </div>
+                
+                <div class="action-card">
+                    <h3>Security</h3>
+                    <p>Manage your password and security settings</p>
+                    <button class="btn secondary" disabled>Change Password (Coming Soon)</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-actions">
+            <a href="{% url 'core:dashboard' %}" class="btn primary">Back to Dashboard</a>
+            <a href="{% url 'accounts:logout' %}" class="btn danger">Logout</a>
+        </div>
+    </div>
+{% endblock %}

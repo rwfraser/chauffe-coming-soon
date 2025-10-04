@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - My Chauffe{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="logo">
+                    <h1><a href="{% url 'core:home' %}">My Chauffe</a></h1>
+                </div>
+                
+                <h2>Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to your account to continue</p>
+                
+                <form method="post" class="auth-form">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="form-errors">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <p class="error">{{ error }}</p>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}">Username</label>
+                        {{ form.username }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.password.id_for_label }}">Password</label>
+                        {{ form.password }}
+                    </div>
+                    
+                    <button type="submit" class="auth-submit-btn">Sign In</button>
+                </form>
+                
+                <div class="auth-links">
+                    <p>Don't have an account? <a href="{% url 'accounts:register' %}">Sign up here</a></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="background-animation">
+            <div class="circle circle-1"></div>
+            <div class="circle circle-2"></div>
+            <div class="circle circle-3"></div>
+        </div>
+    </div>
+{% endblock %}
