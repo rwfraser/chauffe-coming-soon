@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}DLOID Controller Name Generator - My Chauffe{% endblock %}
+
+{% block extra_css %}
+<style>
+    .generator-container {
+        min-height: calc(100vh - 80px);
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .generator-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .generator-card h1 {
+        color: #333;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .generator-card .subtitle {
+        color: #666;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h3 {
+        color: #333;
+        margin-bottom: 1.5rem;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #4ecdc4;
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+    }
+    
+    .form-group small {
+        color: #666;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+    
+    .required {
+        color: #f44336;
+    }
+    
+    .generate-btn {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        margin: 2rem auto;
+        padding: 1rem 2rem;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #b8daff;
+    }
+    
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .result-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .result-header {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px 10px 0 0;
+        margin: -2rem -2rem 1.5rem -2rem;
+    }
+    
+    .result-header.error {
+        background: linear-gradient(45deg, #dc3545, #fd7e14);
+    }
+    
+    .code-block {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        word-break: break-all;
+        border: 1px solid #e9ecef;
+        font-size: 0.9rem;
+    }
+    
+    .info-section {
+        background: #e7f3ff;
+        border: 1px solid #b8daff;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .success-section {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .toggle-btn {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+    
+    .debug-section {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .debug-section pre {
+        margin: 0;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="generator-container">
+    <div class="generator-card">
+        <h1>DLOID Controller Name Generator</h1>
+        <p class="subtitle">Welcome, {{ user.username }}! Generate secure 32-hex Controller Names and DLOID parameters for CHAUFFEcoin blockchain licenses.</p>
+        
+        <div id="alert-container"></div>
+        
+        <div class="form-section">
+            <h3>Licensee Information & DLOID Parameters</h3>
+            <form id="test-form">
+                
+                <!-- Licensee Info -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name: <span class="required">*</span></label>
+                        <input type="text" id="first-name" value="Jessica" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name: <span class="required">*</span></label>
+                        <input type="text" id="last-name" value="Thompson" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Existing Licenses:</label>
+                        <input type="number" id="existing-licenses" value="2" min="0">
+                        <small>Prior DLOID licenses held</small>
+                    </div>
+                </div>
+                
+                <!-- DLOID Parameters -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CHAUFFEcoin Quantity:</label>
+                        <input type="text" id="chauffe-quantity" value="0000100000">
+                        <small>10-digit number</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Partnership Status:</label>
+                        <select id="partnership-status">
+                            <option value="L" selected>Limited</option>
+                            <option value="G">General</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rating:</label>
+                        <input type="text" id="rating" value="000025000">
+                        <small>9-digit number</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Share Eligible:</label>
+                        <select id="share-eligible">
+                            <option value="N" selected>No</option>
+                            <option value="Y">Yes</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Additional DLOID Parameters Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Collateralizable:</label>
+                        <select id="collateralizable">
+                            <option value="N" selected>No</option>
+                            <option value="Y">Yes</option>
+                        </select>
+                        <small>Can be used as collateral</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Inheritance:</label>
+                        <select id="inheritance">
+                            <option value="Y" selected>Yes</option>
+                            <option value="N">No</option>
+                        </select>
+                        <small>Inheritable asset</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Convertibility:</label>
+                        <select id="convertibility">
+                            <option value="0">Level 0</option>
+                            <option value="1">Level 1</option>
+                            <option value="2" selected>Level 2</option>
+                            <option value="3">Level 3</option>
+                            <option value="4">Level 4</option>
+                            <option value="5">Level 5</option>
+                        </select>
+                        <small>Conversion level</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Redeemability:</label>
+                        <select id="redeemability">
+                            <option value="M">Market</option>
+                            <option value="N">None</option>
+                            <option value="P" selected>Par</option>
+                        </select>
+                        <small>Redemption type</small>
+                    </div>
+                </div>
+                
+                <button type="button" class="generate-btn" onclick="testControllerNameGeneration()">
+                    Generate Controller Name & Create Blockchain
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="result-area"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/blockchain-client.js' %}"></script>
+<script>
+    function showAlert(message, type = 'info') {
+        const alertContainer = document.getElementById('alert-container');
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerHTML = message;
+        alertContainer.appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 8000);
+    }
+
+    async function testControllerNameGeneration() {
+        console.log('=== Starting Controller Name Generation Test ===');
+        
+        const firstName = document.getElementById('first-name').value;
+        const lastName = document.getElementById('last-name').value;
+        const existingLicenses = parseInt(document.getElementById('existing-licenses').value) || 0;
+        
+        // Generate blockchain name from licensee information
+        const name = `${firstName} ${lastName} License #${existingLicenses + 1} Blockchain`;
+        
+        if (!firstName.trim() || !lastName.trim()) {
+            showAlert('Please fill in all required fields', 'warning');
+            return;
+        }
+        
+        const dloidParams = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            priorDloidQty: existingLicenses.toString(),
+            chauffeQuantity: document.getElementById('chauffe-quantity').value || '0000100000',
+            partnershipStatus: document.getElementById('partnership-status').value || 'L',
+            collateralizable: document.getElementById('collateralizable').value || 'N',
+            inheritance: document.getElementById('inheritance').value || 'Y',
+            convertibility: document.getElementById('convertibility').value || '2',
+            rating: document.getElementById('rating').value || '000010000',
+            shareEligible: document.getElementById('share-eligible').value || 'N',
+            redeemability: document.getElementById('redeemability').value || 'P'
+        };
+        
+        console.log('Sending data:', {
+            generatedBlockchainName: name,
+            firstName,
+            lastName, 
+            existingLicenses,
+            dloidParams
+        });
+        
+        try {
+            showAlert('🔄 Generating Controller Name and creating blockchain...', 'info');
+            
+            const client = new BlockchainClient();
+            const result = await client.createBlockchain(name.trim(), dloidParams);
+            
+            console.log('Full API Result:', JSON.stringify(result, null, 2));
+            console.log('Result keys:', Object.keys(result || {}));
+            console.log('Licensee info:', result.licensee_info);
+            console.log('Controller name:', result.controller_name);
+            console.log('DLOID params:', result.dloid_params);
+            
+            if (result && result.success) {
+                showAlert('✅ Success! Controller Name generated and blockchain created!', 'success');
+                
+                // Display detailed results
+                const resultArea = document.getElementById('result-area');
+                resultArea.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <h3>🎉 Controller Name Generated Successfully!</h3>
+                        </div>
+                        <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4>Licensee Information:</h4>
+                                <p><strong>Name:</strong> ${result.licensee_info?.first_name || firstName} ${result.licensee_info?.last_name || lastName}</p>
+                                <p><strong>Previous Licenses:</strong> ${result.licensee_info?.existing_licenses ?? existingLicenses}</p>
+                                <p><strong>New License #:</strong> ${result.licensee_info?.new_license_number ?? (existingLicenses + 1)}</p>
+                                
+                                <h4 style="margin-top: 1.5rem;">Blockchain Details:</h4>
+                                <p><strong>Generated Name:</strong> ${name}</p>
+                                <p><strong>Blockchain ID:</strong> <span class="code-block">${result.blockchain_id || 'Not available'}</span></p>
+                            </div>
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4>Generated Controller Name (32 hex):</h4>
+                                <div class="code-block">${result.controller_name || 'Not generated'}</div>
+                                
+                                <h4 style="margin-top: 1.5rem;">DLOID Parameter String (57 chars):</h4>
+                                <div class="code-block">${result.dloid_params || 'Not generated'}</div>
+                                
+                                <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+                                    Controller Length: ${result.controller_name?.length || 0} chars<br>
+                                    DLOID Params Length: ${result.dloid_params?.length || 0} chars
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <strong>Controller Name Structure:</strong><br>
+                            • Last name (6 chars): ${lastName.toUpperCase().substring(0,6).padEnd(6,'0')}<br>
+                            • First name (6 chars): ${firstName.toUpperCase().substring(0,6).padEnd(6,'0')}<br>  
+                            • License number: ${(existingLicenses + 1).toString().padStart(4,'0')}<br>
+                            • Random hex: 16 characters (generated securely)
+                        </div>
+                        
+                        <div class="success-section">
+                            <strong>DLOID Parameters Used:</strong><br>
+                            • Quantity: ${dloidParams.chauffeQuantity} (${parseInt(dloidParams.chauffeQuantity).toLocaleString()} CHAUFFEcoins)<br>
+                            • Partnership: ${dloidParams.partnershipStatus} (${dloidParams.partnershipStatus === 'L' ? 'Limited' : 'General'})<br>
+                            • Collateralizable: ${dloidParams.collateralizable} (${dloidParams.collateralizable === 'Y' ? 'Yes' : 'No'})<br>
+                            • Inheritance: ${dloidParams.inheritance} (${dloidParams.inheritance === 'Y' ? 'Yes' : 'No'})<br>
+                            • Convertibility: Level ${dloidParams.convertibility}<br>
+                            • Rating: ${dloidParams.rating} (${parseInt(dloidParams.rating).toLocaleString()})<br>
+                            • Share Eligible: ${dloidParams.shareEligible} (${dloidParams.shareEligible === 'Y' ? 'Yes' : 'No'})<br>
+                            • Redeemability: ${dloidParams.redeemability} (${dloidParams.redeemability === 'M' ? 'Market' : dloidParams.redeemability === 'N' ? 'None' : 'Par'})
+                        </div>
+                        
+                        <div class="debug-section" id="debugInfo" style="display: none;">
+                            <strong>Debug - Raw API Response:</strong><br>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                        <button class="toggle-btn" type="button" onclick="toggleDebug()">
+                            Toggle Debug Info
+                        </button>
+                    </div>
+                `;
+            } else {
+                showAlert(`❌ Error: ${result?.error || 'Unknown error'}`, 'danger');
+                
+                // Display error details
+                const resultArea = document.getElementById('result-area');
+                resultArea.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-header error">
+                            <h3>❌ Error Creating Blockchain</h3>
+                        </div>
+                        <p><strong>Error Message:</strong> ${result?.error || 'No error message provided'}</p>
+                        <p><strong>Success:</strong> ${result?.success ?? 'Unknown'}</p>
+                        
+                        <div class="debug-section" style="display: block;">
+                            <strong>Full API Response:</strong><br>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                        
+                        <div class="info-section">
+                            <strong>Sent Data:</strong><br>
+                            <pre>${JSON.stringify({generatedBlockchainName: name, firstName, lastName, existingLicenses, dloidParams}, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert(`💥 Exception: ${error.message}`, 'danger');
+        }
+    }
+
+    // Test API connection on load
+    window.addEventListener('load', async () => {
+        try {
+            const response = await fetch('/api/health');
+            if (response.ok) {
+                showAlert('✅ API Connection OK - Ready to test Controller Name generation', 'success');
+            } else {
+                showAlert('⚠️ API Connection Issues', 'warning');
+            }
+        } catch (error) {
+            showAlert('⚠️ API Connection Warning - May need CloudManager.py running', 'warning');
+        }
+    });
+    
+    function toggleDebug() {
+        const debugSection = document.getElementById('debugInfo');
+        if (debugSection.style.display === 'none') {
+            debugSection.style.display = 'block';
+        } else {
+            debugSection.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

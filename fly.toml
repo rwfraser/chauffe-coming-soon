@@ -16,11 +16,11 @@ primary_region = 'ord'
   min_machines_running = 1
   processes = ['app']
 
-[http_service.checks]
+[[http_service.checks]]
   interval = "10s"
   grace_period = "5s"
   method = "GET"
-  path = "/"
+  path = "/health/"
   protocol = "http"
   timeout = "2s"
 

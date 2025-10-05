@@ -139,6 +139,24 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://chauffe-coming-soon.fly.dev',
+    'https://mychauffe.com',
+    'https://www.mychauffe.com',
+]
+
+# Cookie settings for production
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    # Don't force SSL redirect as it can break health checks
+    # SECURE_SSL_REDIRECT = True
+else:
+    # Allow HTTP in development
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+
 # Security settings for production
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
@@ -147,6 +165,13 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    
+    # Additional CSRF settings for production
+    CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access for better UX
+    CSRF_USE_SESSIONS = False     # Use cookies instead of sessions
+    CSRF_COOKIE_SAMESITE = 'Lax'  # Balance security and functionality
+    # Be more permissive with CSRF for health checks
+    CSRF_FAILURE_VIEW = None      # Use default CSRF failure handling
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

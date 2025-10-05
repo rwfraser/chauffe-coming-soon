@@ -9,7 +9,6 @@
             {% if not user.is_authenticated %}
                 <div class="auth-menu">
                     <a href="{% url 'accounts:login' %}" class="auth-btn login-btn">Login</a>
-                    <a href="{% url 'accounts:register' %}" class="auth-btn register-btn">Sign Up</a>
                 </div>
             {% endif %}
 
@@ -23,6 +22,7 @@
                     <p class="subtitle">Ready to explore what's coming next? Check out your dashboard for the latest updates.</p>
                     <div class="action-buttons">
                         <a href="{% url 'core:dashboard' %}" class="main-btn">Go to Dashboard</a>
+                        <a href="{% url 'core:controller_generator' %}" class="main-btn">DLOID Controller Generator</a>
                     </div>
                 {% else %}
                     <h2>Something exciting is brewing</h2>
@@ -34,17 +34,6 @@
                 {% endif %}
             </div>
             
-            {% if not user.is_authenticated %}
-                <div class="notify-section">
-                    <p>Want to be the first to know when we launch?</p>
-                    <div class="email-form">
-                        <input type="email" placeholder="Enter your email address" id="email">
-                        <button onclick="notifyMe()">Notify Me</button>
-                    </div>
-                    <p class="form-message" id="message"></p>
-                    <p class="signup-prompt">Or <a href="{% url 'accounts:register' %}">create an account</a> to get exclusive early access!</p>
-                </div>
-            {% endif %}
         </div>
         
         <div class="background-animation">
@@ -60,41 +49,4 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-        function notifyMe() {
-            const email = document.getElementById('email').value;
-            const message = document.getElementById('message');
-            
-            if (!email) {
-                message.textContent = 'Please enter your email address';
-                message.style.color = '#ff6b6b';
-                return;
-            }
-            
-            if (!isValidEmail(email)) {
-                message.textContent = 'Please enter a valid email address';
-                message.style.color = '#ff6b6b';
-                return;
-            }
-            
-            message.textContent = 'Thanks! We\'ll notify you when we launch.';
-            message.style.color = '#4ecdc4';
-            document.getElementById('email').value = '';
-        }
-        
-        function isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        }
-        
-        // Enter key support for email form
-        const emailInput = document.getElementById('email');
-        if (emailInput) {
-            emailInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    notifyMe();
-                }
-            });
-        }
-    </script>
 {% endblock %}
