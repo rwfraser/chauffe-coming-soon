@@ -14,13 +14,16 @@ from pathlib import Path
 import os
 import environ
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 # Initialize environment variables
 env = environ.Env(
     DEBUG=(bool, False)
 )
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Read .env file
+environ.Env.read_env(str(BASE_DIR / '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -171,9 +174,15 @@ if not DEBUG:
     CSRF_USE_SESSIONS = False     # Use cookies instead of sessions
     CSRF_COOKIE_SAMESITE = 'Lax'  # Balance security and functionality
     # Be more permissive with CSRF for health checks
-    CSRF_FAILURE_VIEW = None      # Use default CSRF failure handling
+    # CSRF_FAILURE_VIEW = None      # Use default CSRF failure handling
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Stripe Configuration
+STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY', default='pk_test_')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='sk_test_')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
+STRIPE_CURRENCY = 'usd'

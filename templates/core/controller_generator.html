@@ -92,6 +92,18 @@
         box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
     }
     
+    .form-group input[readonly] {
+        background: #f8f9fa;
+        color: #495057;
+        border-color: #ced4da;
+        cursor: not-allowed;
+    }
+    
+    .form-group input[readonly]:focus {
+        border-color: #ced4da;
+        box-shadow: none;
+    }
+    
     .form-group small {
         color: #666;
         font-size: 0.8rem;
@@ -119,9 +131,17 @@
         transition: all 0.3s ease;
     }
     
-    .generate-btn:hover {
+    .generate-btn:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .generate-btn:disabled {
+        background: linear-gradient(45deg, #6c757d, #adb5bd);
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+        box-shadow: none;
     }
     
     .alert {
@@ -236,6 +256,20 @@
         <h1>DLOID Controller Name Generator</h1>
         <p class="subtitle">Welcome, {{ user.username }}! Generate secure 32-hex Controller Names and DLOID parameters for CHAUFFEcoin blockchain licenses.</p>
         
+        {% if purchase_context.is_post_purchase %}
+        <div class="alert alert-success">
+            <h4>🎉 Payment Successful!</h4>
+            <p>Thank you for purchasing <strong>{{ purchase_context.license_count }} {{ purchase_context.product.name }}{% if purchase_context.license_count > 1 %}s{% endif %}</strong>!</p>
+            <p>Total value: <strong>${{ purchase_context.total_amount }}</strong></p>
+            <p>You received <strong>{{ purchase_context.chauffecoins_earned|floatformat:0 }} CHAUFFEcoins</strong> with your purchase.</p>
+            {% if purchase_context.license_count > 1 %}
+            <p><strong>Note:</strong> You will generate {{ purchase_context.license_count }} controllers with sequential numbers and ratings. Please complete the form below once, and we'll create all {{ purchase_context.license_count }} controllers for you.</p>
+            {% else %}
+            <p>Please complete the form below to generate your controller name and finalize your license.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
         <div id="alert-container"></div>
         
         <div class="form-section">
@@ -246,15 +280,27 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>First Name: <span class="required">*</span></label>
-                        <input type="text" id="first-name" value="Jessica" required>
+                        {% if user_first_name %}
+                            <input type="text" id="first-name" value="{{ user_first_name }}" readonly required>
+                            <small style="color: #666; font-size: 0.8rem;">Account holder name (immutable)</small>
+                        {% else %}
+                            <input type="text" id="first-name" value="" placeholder="Please update your account profile with your first name" readonly required style="background: #f8d7da; border-color: #f5c6cb;">
+                            <small style="color: #721c24; font-size: 0.8rem;">⚠️ Please set your first name in your account profile first</small>
+                        {% endif %}
                     </div>
                     <div class="form-group">
                         <label>Last Name: <span class="required">*</span></label>
-                        <input type="text" id="last-name" value="Thompson" required>
+                        {% if user_last_name %}
+                            <input type="text" id="last-name" value="{{ user_last_name }}" readonly required>
+                            <small style="color: #666; font-size: 0.8rem;">Account holder name (immutable)</small>
+                        {% else %}
+                            <input type="text" id="last-name" value="" placeholder="Please update your account profile with your last name" readonly required style="background: #f8d7da; border-color: #f5c6cb;">
+                            <small style="color: #721c24; font-size: 0.8rem;">⚠️ Please set your last name in your account profile first</small>
+                        {% endif %}
                     </div>
                     <div class="form-group">
                         <label>Existing Licenses:</label>
-                        <input type="number" id="existing-licenses" value="2" min="0">
+                        <input type="number" id="existing-licenses" value="0" min="0">
                         <small>Prior DLOID licenses held</small>
                     </div>
                 </div>
@@ -328,8 +374,12 @@
                     </div>
                 </div>
                 
-                <button type="button" class="generate-btn" onclick="testControllerNameGeneration()">
-                    Generate Controller Name & Create Blockchain
+                <button type="button" id="generate-button" class="generate-btn" onclick="testControllerNameGeneration()">
+                    {% if purchase_context.license_count > 1 %}
+                        Generate {{ purchase_context.license_count }} Controllers & Create Blockchains
+                    {% else %}
+                        Generate Controller Name & Create Blockchain
+                    {% endif %}
                 </button>
             </form>
         </div>
@@ -340,8 +390,26 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/blockchain-client.js' %}"></script>
+<script src="{% static 'js/blockchain-client.js' %}?v=2.3"></script>
 <script>
+    // Purchase context variables
+    const licenseCount = {{ purchase_context.license_count|default:1 }};
+    const isMultipleLicenses = licenseCount > 1;
+    
+    // Retry configuration
+    const MAX_RETRIES = 3;
+    const INITIAL_RETRY_DELAY = 1000; // 1 second
+    
+    // Show warning for multiple licenses
+    if (isMultipleLicenses) {
+        window.addEventListener('beforeunload', function(e) {
+            if (window.generationInProgress) {
+                e.preventDefault();
+                e.returnValue = 'License generation is in progress. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+    }
     function showAlert(message, type = 'info') {
         const alertContainer = document.getElementById('alert-container');
         const alertDiv = document.createElement('div');
@@ -350,23 +418,123 @@
         alertContainer.appendChild(alertDiv);
         setTimeout(() => alertDiv.remove(), 8000);
     }
+    
+    async function createControllerWithRetry(client, name, dloidParams, controllerIndex, retryStats, maxRetries = MAX_RETRIES) {
+        let lastError = null;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            retryStats.totalAttempts++;
+            try {
+                const result = await client.createBlockchain(name.trim(), dloidParams);
+                
+                // If we get a result but it's not successful, treat as error
+                if (!result || !result.success) {
+                    throw new Error(result?.error || 'API returned unsuccessful result');
+                }
+                
+                // Success! Return the result
+                if (attempt > 0) {
+                    retryStats.retriesUsed += attempt;
+                    console.log(`Controller ${controllerIndex} created successfully on retry attempt ${attempt}`);
+                    if (isMultipleLicenses) {
+                        showAlert(`✅ Controller ${controllerIndex} created successfully after ${attempt} ${attempt === 1 ? 'retry' : 'retries'}`, 'success');
+                    }
+                }
+                return result;
+                
+            } catch (error) {
+                lastError = error;
+                console.warn(`Attempt ${attempt + 1} failed for controller ${controllerIndex}:`, error.message);
+                
+                // If this is not the last attempt, wait before retrying
+                if (attempt < maxRetries) {
+                    const retryDelay = INITIAL_RETRY_DELAY * Math.pow(2, attempt); // Exponential backoff
+                    const retryMessage = `⚠️ Controller ${controllerIndex} failed (attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${retryDelay/1000}s... ${lastError?.message ? '(' + lastError.message.substring(0, 50) + ')' : ''}`;
+                    
+                    if (isMultipleLicenses) {
+                        showAlert(retryMessage, 'warning');
+                    }
+                    
+                    console.log(`Waiting ${retryDelay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                } else {
+                    // All retries exhausted
+                    const failureMessage = `❌ Controller ${controllerIndex} creation failed after ${maxRetries + 1} attempts`;
+                    if (isMultipleLicenses) {
+                        showAlert(failureMessage, 'danger');
+                    }
+                    console.error(`All retry attempts exhausted for controller ${controllerIndex}`);
+                }
+            }
+        }
+        
+        // If we get here, all retries failed
+        throw lastError;
+    }
 
     async function testControllerNameGeneration() {
-        console.log('=== Starting Controller Name Generation Test ===');
+        // Get the generate button and disable it immediately to prevent double-clicks
+        const generateButton = document.getElementById('generate-button');
+        if (generateButton && generateButton.disabled) {
+            showAlert('⚠️ Controllers have already been generated successfully!', 'warning');
+            return;
+        }
+        
+        if (isMultipleLicenses) {
+            const confirmed = confirm(`You are about to generate ${licenseCount} controllers. This process may take several minutes and includes automatic retry on failures. Do not leave or refresh this page until completion. Continue?`);
+            if (!confirmed) return;
+            
+            // Set generation in progress flag
+            window.generationInProgress = true;
+        }
+        
+        // Disable button during processing
+        if (generateButton) {
+            generateButton.disabled = true;
+            const originalText = generateButton.textContent;
+            generateButton.textContent = isMultipleLicenses ? '🔄 Generating Controllers...' : '🔄 Generating Controller...';
+            generateButton.setAttribute('data-original-text', originalText);
+        }
+        
+        console.log(`=== Starting ${licenseCount} Controller Generation(s) ===`);
         
         const firstName = document.getElementById('first-name').value;
         const lastName = document.getElementById('last-name').value;
         const existingLicenses = parseInt(document.getElementById('existing-licenses').value) || 0;
         
-        // Generate blockchain name from licensee information
-        const name = `${firstName} ${lastName} License #${existingLicenses + 1} Blockchain`;
+        // Check if user has set their account name
+        {% if not user_first_name or not user_last_name %}
+        // Re-enable button if validation fails
+        if (generateButton) {
+            generateButton.disabled = false;
+            const originalText = generateButton.getAttribute('data-original-text');
+            if (originalText) {
+                generateButton.textContent = originalText;
+                generateButton.removeAttribute('data-original-text');
+            }
+        }
+        showAlert('❌ Cannot generate controllers: Please update your account profile with your first and last name before proceeding. <a href="/accounts/profile/" style="color: #721c24; text-decoration: underline;">Update Profile</a>', 'danger');
+        window.generationInProgress = false;
+        return;
+        {% endif %}
         
         if (!firstName.trim() || !lastName.trim()) {
+            // Re-enable button if validation fails
+            if (generateButton) {
+                generateButton.disabled = false;
+                const originalText = generateButton.getAttribute('data-original-text');
+                if (originalText) {
+                    generateButton.textContent = originalText;
+                    generateButton.removeAttribute('data-original-text');
+                }
+            }
             showAlert('Please fill in all required fields', 'warning');
+            window.generationInProgress = false;
             return;
         }
         
-        const dloidParams = {
+        // Get base DLOID parameters
+        const baseDloidParams = {
             firstName: firstName.trim(),
             lastName: lastName.trim(),
             priorDloidQty: existingLicenses.toString(),
@@ -380,58 +548,162 @@
             redeemability: document.getElementById('redeemability').value || 'P'
         };
         
-        console.log('Sending data:', {
-            generatedBlockchainName: name,
-            firstName,
-            lastName, 
-            existingLicenses,
-            dloidParams
-        });
+        const baseRating = parseInt(baseDloidParams.rating) || 10000;
         
         try {
-            showAlert('🔄 Generating Controller Name and creating blockchain...', 'info');
+            if (isMultipleLicenses) {
+                showAlert(`🔄 Generating ${licenseCount} controllers and creating blockchains. Please wait...`, 'info');
+            } else {
+                showAlert('🔄 Generating Controller Name and creating blockchain...', 'info');
+            }
             
-            const client = new BlockchainClient();
-            const result = await client.createBlockchain(name.trim(), dloidParams);
+            // Use the global blockchain client instance that has the correct API URL
+            // If the global client isn't available, create one with the correct URL
+            const client = window.blockchainClient || blockchainClient || new BlockchainClient('http://localhost:5000');
             
-            console.log('Full API Result:', JSON.stringify(result, null, 2));
-            console.log('Result keys:', Object.keys(result || {}));
-            console.log('Licensee info:', result.licensee_info);
-            console.log('Controller name:', result.controller_name);
-            console.log('DLOID params:', result.dloid_params);
+            if (!window.blockchainClient && !blockchainClient) {
+                console.log('Creating new blockchain client for localhost:5000');
+            } else {
+                console.log('Using existing blockchain client instance');
+            }
+            const results = [];
+            let lastResult = null;
             
-            if (result && result.success) {
-                showAlert('✅ Success! Controller Name generated and blockchain created!', 'success');
+            // Generate controllers iteratively
+            const retryStats = { totalAttempts: 0, retriesUsed: 0 };
+            
+            for (let i = 0; i < licenseCount; i++) {
+                const currentLicenseNum = existingLicenses + 1 + i;
+                const currentRating = baseRating + i;
+                
+                // Create name for this iteration
+                const name = `${firstName} ${lastName} License #${currentLicenseNum} Blockchain`;
+                
+                // Create DLOID params for this iteration
+                const dloidParams = {
+                    ...baseDloidParams,
+                    priorDloidQty: (existingLicenses + i).toString(),
+                    rating: currentRating.toString().padStart(9, '0')
+                };
+                
+                console.log(`Creating controller ${i + 1}/${licenseCount}:`, {
+                    generatedBlockchainName: name,
+                    licenseNumber: currentLicenseNum,
+                    rating: currentRating,
+                    dloidParams
+                });
+                
+                if (isMultipleLicenses) {
+                    showAlert(`🔄 Creating controller ${i + 1} of ${licenseCount}...`, 'info');
+                }
+                
+                // Use retry logic for controller creation
+                const result = await createControllerWithRetry(client, name, dloidParams, i + 1, retryStats);
+                results.push(result);
+                lastResult = result;
+                
+                console.log(`Controller ${i + 1} created successfully:`, result.controller_name);
+                
+                // Adaptive delay between iterations
+                if (i < licenseCount - 1) {
+                    const delayBetweenControllers = isMultipleLicenses ? 750 : 500; // Slightly longer for multiple
+                    await new Promise(resolve => setTimeout(resolve, delayBetweenControllers));
+                }
+            }
+            
+            // Use the last result for display
+            const result = lastResult;
+            
+            console.log('All Results:', results.length);
+            console.log('Retry Statistics:', retryStats);
+            console.log('Last Result:', JSON.stringify(result, null, 2));
+                console.log('Result keys:', Object.keys(result || {}));
+                console.log('Licensee info:', result.licensee_info);
+                console.log('Controller name:', result.controller_name);
+                console.log('Raw DLOID params from API:', result.dloid_params);
+                
+                // WORKAROUND: Extract actual DLOID parameters from CloudManager response
+                // CloudManager incorrectly prepends controller name to DLOID params
+                let originalDloidParams = result.dloid_params;
+                let hadDloidIssue = false;
+                
+                if (result.dloid_params && result.dloid_params.length > 57) {
+                    hadDloidIssue = true;
+                    // Extract the last 57 characters or the part after the controller name
+                    if (result.controller_name && result.dloid_params.startsWith(result.controller_name)) {
+                        result.dloid_params = result.dloid_params.substring(result.controller_name.length);
+                        console.log('Extracted DLOID params (after controller name):', result.dloid_params);
+                    } else {
+                        result.dloid_params = result.dloid_params.substring(result.dloid_params.length - 57);
+                        console.log('Extracted DLOID params (last 57 chars):', result.dloid_params);
+                    }
+                }
+                console.log('Final DLOID params:', result.dloid_params);
+            
+                if (result && result.success) {
+                window.generationInProgress = false;
+                
+                // hadDloidIssue variable is already set above in the workaround section
+                
+                if (isMultipleLicenses) {
+                    showAlert(`✅ Success! All ${licenseCount} controllers generated and blockchains created!`, 'success');
+                } else {
+                    showAlert('✅ Success! Controller Name generated and blockchain created!', 'success');
+                }
+                
+                if (hadDloidIssue) {
+                    showAlert('⚠️ Note: DLOID parameters were corrected due to CloudManager formatting issue', 'warning');
+                }
+                
+                // Disable the generate button and update its text to prevent re-generation
+                const generateButton = document.getElementById('generate-button');
+                if (generateButton) {
+                    generateButton.disabled = true;
+                    generateButton.onclick = null;
+                    if (isMultipleLicenses) {
+                        generateButton.textContent = `✅ ${licenseCount} Controllers Generated Successfully`;
+                    } else {
+                        generateButton.textContent = '✅ Controller Generated Successfully';
+                    }
+                    console.log('Generate button disabled to prevent duplicate generation');
+                }
                 
                 // Display detailed results
                 const resultArea = document.getElementById('result-area');
+                const headerText = isMultipleLicenses ? 
+                    `🎉 ${licenseCount} Controllers Generated Successfully!` : 
+                    '🎉 Controller Name Generated Successfully!';
+                    
                 resultArea.innerHTML = `
                     <div class="result-card">
                         <div class="result-header">
-                            <h3>🎉 Controller Name Generated Successfully!</h3>
+                            <h3>${headerText}</h3>
                         </div>
                         <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
                             <div style="flex: 1; min-width: 300px;">
                                 <h4>Licensee Information:</h4>
                                 <p><strong>Name:</strong> ${result.licensee_info?.first_name || firstName} ${result.licensee_info?.last_name || lastName}</p>
-                                <p><strong>Previous Licenses:</strong> ${result.licensee_info?.existing_licenses ?? existingLicenses}</p>
-                                <p><strong>New License #:</strong> ${result.licensee_info?.new_license_number ?? (existingLicenses + 1)}</p>
+                                <p><strong>Starting License #:</strong> ${existingLicenses + 1}</p>
+                                ${isMultipleLicenses ? `<p><strong>Controllers Generated:</strong> ${licenseCount} (License #${existingLicenses + 1} through #${existingLicenses + licenseCount})</p>` : `<p><strong>New License #:</strong> ${existingLicenses + 1}</p>`}
                                 
-                                <h4 style="margin-top: 1.5rem;">Blockchain Details:</h4>
-                                <p><strong>Generated Name:</strong> ${name}</p>
+                                <h4 style="margin-top: 1.5rem;">Blockchain Details (Last Controller):</h4>
+                                <p><strong>Generated Name:</strong> ${result.licensee_info?.first_name || firstName} ${result.licensee_info?.last_name || lastName} License #${existingLicenses + licenseCount} Blockchain</p>
                                 <p><strong>Blockchain ID:</strong> <span class="code-block">${result.blockchain_id || 'Not available'}</span></p>
                             </div>
                             <div style="flex: 1; min-width: 300px;">
-                                <h4>Generated Controller Name (32 hex):</h4>
+                                <h4>${isMultipleLicenses ? 'Last Generated Controller Name (32 hex):' : 'Generated Controller Name (32 hex):'}</h4>
                                 <div class="code-block">${result.controller_name || 'Not generated'}</div>
                                 
-                                <h4 style="margin-top: 1.5rem;">DLOID Parameter String (57 chars):</h4>
+                                <h4 style="margin-top: 1.5rem;">${isMultipleLicenses ? 'Last DLOID Parameter String (57 chars):' : 'DLOID Parameter String (57 chars):'}</h4>
                                 <div class="code-block">${result.dloid_params || 'Not generated'}</div>
                                 
                                 <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
                                     Controller Length: ${result.controller_name?.length || 0} chars<br>
                                     DLOID Params Length: ${result.dloid_params?.length || 0} chars
                                 </p>
+                                ${isMultipleLicenses ? `<p style="color: #4ecdc4; font-weight: bold; margin-top: 1rem;">All ${licenseCount} controllers have been successfully generated!</p>` : ''}
+                                <p style="color: #28a745; font-weight: bold; font-size: 0.9rem; margin-top: 1rem;">✅ Generation complete - button disabled to prevent duplicates</p>
+                                ${(isMultipleLicenses && retryStats.retriesUsed > 0) ? `<p style="color: #f39c12; font-size: 0.9rem; margin-top: 0.5rem;">Retry Statistics: ${retryStats.totalAttempts} total attempts, ${retryStats.retriesUsed} retries used</p>` : ''}
                             </div>
                         </div>
                         
@@ -443,21 +715,32 @@
                             • Random hex: 16 characters (generated securely)
                         </div>
                         
+                        ${isMultipleLicenses ? `
+                        <div class="info-section">
+                            <strong>Retry Configuration:</strong><br>
+                            • Max retries per controller: ${MAX_RETRIES}<br>
+                            • Retry delay: Exponential backoff (1s, 2s, 4s)<br>
+                            • Total API calls made: ${retryStats.totalAttempts}<br>
+                            ${retryStats.retriesUsed > 0 ? `• Retries needed: ${retryStats.retriesUsed} (automatic recovery)` : '• All controllers created on first attempt'}
+                        </div>` : ''}
+                        
                         <div class="success-section">
-                            <strong>DLOID Parameters Used:</strong><br>
-                            • Quantity: ${dloidParams.chauffeQuantity} (${parseInt(dloidParams.chauffeQuantity).toLocaleString()} CHAUFFEcoins)<br>
-                            • Partnership: ${dloidParams.partnershipStatus} (${dloidParams.partnershipStatus === 'L' ? 'Limited' : 'General'})<br>
-                            • Collateralizable: ${dloidParams.collateralizable} (${dloidParams.collateralizable === 'Y' ? 'Yes' : 'No'})<br>
-                            • Inheritance: ${dloidParams.inheritance} (${dloidParams.inheritance === 'Y' ? 'Yes' : 'No'})<br>
-                            • Convertibility: Level ${dloidParams.convertibility}<br>
-                            • Rating: ${dloidParams.rating} (${parseInt(dloidParams.rating).toLocaleString()})<br>
-                            • Share Eligible: ${dloidParams.shareEligible} (${dloidParams.shareEligible === 'Y' ? 'Yes' : 'No'})<br>
-                            • Redeemability: ${dloidParams.redeemability} (${dloidParams.redeemability === 'M' ? 'Market' : dloidParams.redeemability === 'N' ? 'None' : 'Par'})
+                            <strong>${isMultipleLicenses ? 'DLOID Parameters Used (Last Controller):' : 'DLOID Parameters Used:'}</strong><br>
+                            • Quantity: ${baseDloidParams.chauffeQuantity} (${parseInt(baseDloidParams.chauffeQuantity).toLocaleString()} CHAUFFEcoins)<br>
+                            • Partnership: ${baseDloidParams.partnershipStatus} (${baseDloidParams.partnershipStatus === 'L' ? 'Limited' : 'General'})<br>
+                            • Collateralizable: ${baseDloidParams.collateralizable} (${baseDloidParams.collateralizable === 'Y' ? 'Yes' : 'No'})<br>
+                            • Inheritance: ${baseDloidParams.inheritance} (${baseDloidParams.inheritance === 'Y' ? 'Yes' : 'No'})<br>
+                            • Convertibility: Level ${baseDloidParams.convertibility}<br>
+                            • Rating: ${result.dloid_params ? result.dloid_params.substring(21, 30) : (baseRating + licenseCount - 1).toString().padStart(9, '0')} (Final rating: ${parseInt(result.dloid_params ? result.dloid_params.substring(21, 30) : (baseRating + licenseCount - 1).toString().padStart(9, '0')).toLocaleString()})<br>
+                            • Share Eligible: ${baseDloidParams.shareEligible} (${baseDloidParams.shareEligible === 'Y' ? 'Yes' : 'No'})<br>
+                            • Redeemability: ${baseDloidParams.redeemability} (${baseDloidParams.redeemability === 'M' ? 'Market' : baseDloidParams.redeemability === 'N' ? 'None' : 'Par'})
+                            ${isMultipleLicenses ? `<br><strong>Rating Range:</strong> ${baseRating.toLocaleString()} to ${(baseRating + licenseCount - 1).toLocaleString()} (incremented by 1 for each controller)` : ''}
                         </div>
                         
                         <div class="debug-section" id="debugInfo" style="display: none;">
                             <strong>Debug - Raw API Response:</strong><br>
                             <pre>${JSON.stringify(result, null, 2)}</pre>
+                            ${hadDloidIssue ? `<br><strong>CloudManager Issue Detected:</strong><br>Original DLOID String: <code>${originalDloidParams}</code><br>Corrected DLOID String: <code>${result.dloid_params}</code><br><strong>Issue:</strong> CloudManager prepended controller name to DLOID parameters (fixed automatically)` : ''}
                         </div>
                         <button class="toggle-btn" type="button" onclick="toggleDebug()">
                             Toggle Debug Info
@@ -465,6 +748,18 @@
                     </div>
                 `;
             } else {
+                window.generationInProgress = false;
+                
+                // Re-enable button on error
+                if (generateButton) {
+                    generateButton.disabled = false;
+                    const originalText = generateButton.getAttribute('data-original-text');
+                    if (originalText) {
+                        generateButton.textContent = originalText;
+                        generateButton.removeAttribute('data-original-text');
+                    }
+                }
+                
                 showAlert(`❌ Error: ${result?.error || 'Unknown error'}`, 'danger');
                 
                 // Display error details
@@ -491,22 +786,44 @@
             }
             
         } catch (error) {
+            window.generationInProgress = false;
+            
+            // Re-enable button on exception
+            if (generateButton) {
+                generateButton.disabled = false;
+                const originalText = generateButton.getAttribute('data-original-text');
+                if (originalText) {
+                    generateButton.textContent = originalText;
+                    generateButton.removeAttribute('data-original-text');
+                }
+            }
+            
             console.error('Error:', error);
-            showAlert(`💥 Exception: ${error.message}`, 'danger');
+            if (isMultipleLicenses) {
+                showAlert(`💥 Error during multiple controller generation: ${error.message}`, 'danger');
+            } else {
+                showAlert(`💥 Exception: ${error.message}`, 'danger');
+            }
         }
     }
 
-    // Test API connection on load
+    // Test API connection and version on load
     window.addEventListener('load', async () => {
         try {
-            const response = await fetch('/api/health');
-            if (response.ok) {
-                showAlert('✅ API Connection OK - Ready to test Controller Name generation', 'success');
+            const client = window.blockchainClient || blockchainClient || new BlockchainClient('http://localhost:5000');
+            const healthCheck = await client.checkApiHealth();
+            
+            if (healthCheck.success) {
+                if (healthCheck.compatible) {
+                    showAlert(`✅ CloudManager API v${healthCheck.version || 'Unknown'} - Ready for controller generation`, 'success');
+                } else {
+                    showAlert(`⚠️ CloudManager API v${healthCheck.version} may not be compatible. Expected: ${client.compatibleVersions.join(', ')}`, 'warning');
+                }
             } else {
-                showAlert('⚠️ API Connection Issues', 'warning');
+                showAlert(`❌ CloudManager API unavailable: ${healthCheck.message}`, 'danger');
             }
         } catch (error) {
-            showAlert('⚠️ API Connection Warning - May need CloudManager.py running', 'warning');
+            showAlert('⚠️ API Connection Warning - CloudManager.py may not be running on port 5000', 'warning');
         }
     });
     

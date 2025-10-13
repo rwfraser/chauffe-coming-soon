@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.checkout-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.checkout-header h1 {
+    color: #4ecdc4;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.checkout-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 2rem;
+}
+
+.order-summary {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    height: fit-content;
+}
+
+.order-summary h2 {
+    color: #4ecdc4;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-item:last-of-type {
+    border-bottom: none;
+}
+
+.item-details h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.item-details p {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.item-price {
+    color: #4ecdc4;
+    font-weight: bold;
+    text-align: right;
+}
+
+.summary-totals {
+    border-top: 2px solid rgba(78, 205, 196, 0.3);
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.summary-row.total {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #4ecdc4;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.payment-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.payment-section h2 {
+    color: #4ecdc4;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-control {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #333;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+}
+
+#card-element {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: border-color 0.3s ease;
+}
+
+#card-element.StripeElement--focus {
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+}
+
+#card-errors {
+    color: #e74c3c;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.payment-button {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1.2rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.payment-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.payment-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.security-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.back-link a {
+    color: #4ecdc4;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.alert-error {
+    background: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .checkout-container {
+        padding: 1rem;
+    }
+    
+    .checkout-header h1 {
+        font-size: 2rem;
+    }
+    
+    .checkout-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="checkout-header">
+        <h1>Checkout</h1>
+        <p>Complete your DLO license purchase</p>
+    </div>
+
+    <div id="alert-container"></div>
+
+    {% if cart_items %}
+    <form id="payment-form" method="post">
+        {% csrf_token %}
+        <div class="checkout-content">
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <h2>Order Summary</h2>
+                
+                {% for item in cart_items %}
+                <div class="summary-item">
+                    <div class="item-details">
+                        <h4>{{ item.product.name }}</h4>
+                        <p>{{ item.product.description }}</p>
+                        <p>Quantity: {{ item.quantity }}</p>
+                        <p>Includes: {{ item.product.chauffecoins_included|floatformat:0 }} CHAUFFEcoins</p>
+                    </div>
+                    <div class="item-price">
+                        ${{ item.total_price }}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="summary-totals">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span>${{ cart_total }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax:</span>
+                        <span>$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total CHAUFFEcoins:</span>
+                        <span>{{ total_chauffecoins|floatformat:0 }}</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span>${{ cart_total }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="payment-section">
+                <h2>Payment Information</h2>
+                
+                <div class="form-group">
+                    <label for="cardholder-name">Cardholder Name</label>
+                    <input type="text" id="cardholder-name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="card-element">Credit or Debit Card</label>
+                    <div id="card-element">
+                        <!-- Stripe Elements will create form elements here -->
+                    </div>
+                    <div id="card-errors" role="alert"></div>
+                </div>
+
+                <button type="submit" id="submit-payment" class="payment-button">
+                    <div class="loading-spinner" id="loading-spinner"></div>
+                    <span id="button-text">Complete Purchase - ${{ cart_total }}</span>
+                </button>
+
+                <div class="security-info">
+                    🔒 Your payment information is secure and encrypted
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="cart-empty">
+        <h2>Your cart is empty</h2>
+        <p>Add some products to proceed with checkout.</p>
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'core:store' %}" class="payment-button" style="display: inline-block; text-decoration: none;">Browse Products</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="{% url 'core:cart' %}">&larr; Back to Cart</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+// Initialize Stripe
+const stripe = Stripe('{{ stripe_publishable_key }}');
+const elements = stripe.elements();
+
+// Custom styling for Stripe elements
+const cardStyle = {
+    style: {
+        base: {
+            color: '#333',
+            fontFamily: 'Inter, Helvetica, sans-serif',
+            fontSmoothing: 'antialiased',
+            fontSize: '16px',
+            '::placeholder': {
+                color: '#666'
+            }
+        },
+        invalid: {
+            color: '#e74c3c',
+            iconColor: '#e74c3c'
+        }
+    }
+};
+
+// Create card element
+const cardElement = elements.create('card', cardStyle);
+cardElement.mount('#card-element');
+
+// Handle card validation errors
+cardElement.on('change', function(event) {
+    const displayError = document.getElementById('card-errors');
+    if (event.error) {
+        displayError.textContent = event.error.message;
+    } else {
+        displayError.textContent = '';
+    }
+});
+
+// Handle form submission
+const form = document.getElementById('payment-form');
+form.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const submitButton = document.getElementById('submit-payment');
+    const buttonText = document.getElementById('button-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const cardholderName = document.getElementById('cardholder-name').value;
+    
+    // Validate cardholder name
+    if (!cardholderName.trim()) {
+        showAlert('Please enter the cardholder name', 'error');
+        return;
+    }
+    
+    // Disable submit button and show loading
+    submitButton.disabled = true;
+    loadingSpinner.style.display = 'inline-block';
+    buttonText.textContent = 'Processing...';
+    
+    try {
+        // Create payment method
+        const {error, paymentMethod} = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
+            billing_details: {
+                name: cardholderName,
+            },
+        });
+        
+        if (error) {
+            showAlert(error.message, 'error');
+            resetButton();
+            return;
+        }
+        
+        // Create payment intent on server
+        const response = await fetch('{% url "core:create_payment_intent" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                payment_method_id: paymentMethod.id,
+                cardholder_name: cardholderName
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            showAlert(data.error || 'Payment failed', 'error');
+            resetButton();
+            return;
+        }
+        
+        // Confirm payment
+        const {error: confirmError} = await stripe.confirmCardPayment(data.client_secret);
+        
+        if (confirmError) {
+            showAlert(confirmError.message, 'error');
+            resetButton();
+        } else {
+            // Payment succeeded, redirect to controller generator
+            window.location.href = `{% url "core:controller_generator" %}?order_id=${data.order_id}`;
+        }
+        
+    } catch (error) {
+        console.error('Payment error:', error);
+        showAlert('An unexpected error occurred. Please try again.', 'error');
+        resetButton();
+    }
+});
+
+function resetButton() {
+    const submitButton = document.getElementById('submit-payment');
+    const buttonText = document.getElementById('button-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    
+    submitButton.disabled = false;
+    loadingSpinner.style.display = 'none';
+    buttonText.textContent = 'Complete Purchase - ${{ cart_total }}';
+}
+
+function showAlert(message, type = 'error') {
+    const alertContainer = document.getElementById('alert-container');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    
+    alertContainer.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+    
+    // Scroll to top to show alert
+    alertContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.store-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.store-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.store-header h1 {
+    color: #4ecdc4;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.store-header p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.product-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-title {
+    color: #4ecdc4;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.product-description {
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.product-features {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.product-features li {
+    color: #666;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.product-features li::before {
+    content: "✓";
+    color: #4ecdc4;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.product-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.price-amount {
+    color: #4ecdc4;
+    font-weight: bold;
+    font-size: 2rem;
+}
+
+.chauffecoins-included {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.add-to-cart-section {
+    margin-top: 1.5rem;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quantity-selector label {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.quantity-input-store {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem;
+    border-radius: 8px;
+    color: #333;
+    font-weight: bold;
+    width: 80px;
+    text-align: center;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.quantity-input-store:focus {
+    outline: none;
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.quantity-input-store::-webkit-outer-spin-button,
+.quantity-input-store::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quantity-input-store[type=number] {
+    -moz-appearance: textfield;
+}
+
+.add-to-cart-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.add-to-cart-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.cart-link {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4ecdc4;
+    color: white;
+    padding: 1rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.cart-link:hover {
+    background: #45b7b8;
+    transform: scale(1.1);
+}
+
+.cart-count {
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.alert-error {
+    background: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+@media (max-width: 768px) {
+    .store-container {
+        padding: 1rem;
+    }
+    
+    .store-header h1 {
+        font-size: 2rem;
+    }
+    
+    .products-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="store-container">
+    <!-- CSRF token for AJAX requests -->
+    {% csrf_token %}
+    
+    <div class="store-header">
+        <h1>CHAUFFE Store</h1>
+        <p>Get your DLO (Designated Licensed Operator) license and start your CHAUFFE journey</p>
+    </div>
+
+    <a href="{% url 'core:cart' %}" class="cart-link">
+        🛒 Cart
+        {% if cart_items_count > 0 %}
+            <span class="cart-count">{{ cart_items_count }}</span>
+        {% endif %}
+    </a>
+
+    <div id="alert-container"></div>
+
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <h2 class="product-title">{{ product.name }}</h2>
+            <p class="product-description">{{ product.description }}</p>
+            
+            <ul class="product-features">
+                <li>1 CHAUFFE Controller License</li>
+                <li>{{ product.chauffecoins_included|floatformat:0 }} CHAUFFEcoins included</li>
+                <li>Full blockchain controller access</li>
+                <li>24/7 support included</li>
+                <li>Instant digital delivery</li>
+            </ul>
+
+            <div class="product-price">
+                <div class="price-amount">${{ product.price }}</div>
+                <div class="chauffecoins-included">
+                    + {{ product.chauffecoins_included|floatformat:0 }} CHAUFFEcoins
+                </div>
+            </div>
+
+            <div class="add-to-cart-section">
+                <div class="quantity-selector">
+                    <label for="qty-store-{{ product.id }}">Quantity:</label>
+                    <div>
+                        <input type="number" id="qty-store-{{ product.id }}" class="quantity-input-store" 
+                               value="1" min="1" max="9999" onchange="validateStoreQuantity({{ product.id }})"
+                               title="Enter quantity (1-9999)">
+                        <small style="display: block; color: #666; font-size: 0.8rem; margin-top: 0.25rem;">Max: 9999</small>
+                    </div>
+                </div>
+                <button class="add-to-cart-btn" onclick="addToCart({{ product.id }})">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="product-card">
+            <h2 class="product-title">No products available</h2>
+            <p class="product-description">Check back soon for new products!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAlert(message, type = 'success') {
+    const alertContainer = document.getElementById('alert-container');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    
+    // Check if message contains HTML
+    if (message.includes('<')) {
+        alertDiv.innerHTML = message;
+    } else {
+        alertDiv.textContent = message;
+    }
+    
+    alertContainer.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds for profile completion messages
+    const timeout = type === 'error' && message.includes('profile') ? 5000 : 3000;
+    setTimeout(() => {
+        alertDiv.remove();
+    }, timeout);
+}
+
+function validateStoreQuantity(productId) {
+    const input = document.getElementById(`qty-store-${productId}`);
+    if (input) {
+        let quantity = parseInt(input.value) || 1;
+        
+        if (quantity < 1) {
+            quantity = 1;
+            input.value = quantity;
+        } else if (quantity > 9999) {
+            quantity = 9999;
+            input.value = quantity;
+            showAlert('Maximum quantity is 9999', 'error');
+        }
+    }
+}
+
+function addToCart(productId) {
+    const button = event.target;
+    const quantityInput = document.getElementById(`qty-store-${productId}`);
+    const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
+    
+    // Validate quantity before adding
+    if (quantity < 1 || quantity > 9999) {
+        showAlert('Please enter a quantity between 1 and 9999', 'error');
+        return;
+    }
+    
+    button.disabled = true;
+    button.textContent = 'Adding...';
+
+    fetch('{% url "core:add_to_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: quantity
+        })
+    })
+    .then(response => {
+        if (response.status === 400) {
+            // Handle profile completion error
+            return response.json().then(data => {
+                if (data.error === 'Profile incomplete') {
+                    showAlert(data.message + ' <a href="' + data.redirect_url + '" style="color: #721c24; text-decoration: underline;">Complete Profile</a>', 'error');
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 3000);
+                    return { success: false, profileIncomplete: true };
+                }
+                return data;
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.profileIncomplete) {
+            // Already handled above
+            return;
+        }
+        if (data.success) {
+            showAlert('Product added to cart!', 'success');
+            updateCartCount(data.cart_items_count);
+        } else {
+            showAlert(data.error || 'Failed to add product to cart', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred. Please try again.', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.textContent = 'Add to Cart';
+    });
+}
+
+function updateCartCount(count) {
+    const cartLink = document.querySelector('.cart-link');
+    const existingCount = cartLink.querySelector('.cart-count');
+    
+    if (count > 0) {
+        if (existingCount) {
+            existingCount.textContent = count;
+        } else {
+            const countSpan = document.createElement('span');
+            countSpan.className = 'cart-count';
+            countSpan.textContent = count;
+            cartLink.appendChild(countSpan);
+        }
+    } else if (existingCount) {
+        existingCount.remove();
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
