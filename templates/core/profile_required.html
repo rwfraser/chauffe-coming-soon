@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-required-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.profile-required-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.profile-required-icon {
+    font-size: 4rem;
+    color: #f39c12;
+    margin-bottom: 2rem;
+}
+
+.profile-required-title {
+    color: #4ecdc4;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.profile-required-message {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.profile-status {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.profile-status h4 {
+    color: #f39c12;
+    margin-bottom: 1rem;
+}
+
+.profile-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.profile-field:last-child {
+    border-bottom: none;
+}
+
+.field-status {
+    font-weight: bold;
+}
+
+.field-complete {
+    color: #28a745;
+}
+
+.field-incomplete {
+    color: #dc3545;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #4ecdc4;
+    border: 2px solid #4ecdc4;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.security-notice {
+    background: rgba(78, 205, 196, 0.1);
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.security-notice h4 {
+    color: #4ecdc4;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .profile-required-container {
+        padding: 1rem;
+    }
+    
+    .profile-required-card {
+        padding: 2rem;
+    }
+    
+    .profile-required-title {
+        font-size: 2rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-required-container">
+    <div class="profile-required-card">
+        <div class="profile-required-icon">
+            ⚠️
+        </div>
+        
+        <h1 class="profile-required-title">Profile Completion Required</h1>
+        
+        <p class="profile-required-message">
+            Before you can access the {{ page_name|default:"store" }}, please complete your profile by adding your first and last name. 
+            This information is required for DLO license generation and blockchain controller creation.
+        </p>
+        
+        <div class="profile-status">
+            <h4>📋 Profile Status</h4>
+            
+            <div class="profile-field">
+                <span>First Name:</span>
+                {% if user_first_name %}
+                    <span class="field-status field-complete">✅ {{ user_first_name }}</span>
+                {% else %}
+                    <span class="field-status field-incomplete">❌ Required</span>
+                {% endif %}
+            </div>
+            
+            <div class="profile-field">
+                <span>Last Name:</span>
+                {% if user_last_name %}
+                    <span class="field-status field-complete">✅ {{ user_last_name }}</span>
+                {% else %}
+                    <span class="field-status field-incomplete">❌ Required</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="security-notice">
+            <h4>🔒 Important Security Notice</h4>
+            <p>
+                Your first and last name will be permanently associated with your DLO licenses and blockchain controllers. 
+                <strong>This information cannot be changed after your first license purchase</strong> for security and compliance reasons.
+            </p>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'accounts:profile' %}" class="btn btn-primary">
+                📝 Complete Profile Now
+            </a>
+            <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">
+                🏠 Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

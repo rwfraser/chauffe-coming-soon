@@ -1,63 +1,461 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Profile - My Chauffe{% endblock %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.profile-header h1 {
+    color: #4ecdc4;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #4ecdc4;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-header h2 {
+    color: #4ecdc4;
+    margin: 0;
+}
+
+.license-card, .transaction-card, .order-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.license-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.license-number {
+    font-family: 'Courier New', monospace;
+    background: rgba(78, 205, 196, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 5px;
+    color: #4ecdc4;
+    font-weight: bold;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.status-completed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.status-pending {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.transaction-amount {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.transaction-earned {
+    color: #28a745;
+}
+
+.transaction-spent {
+    color: #dc3545;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #4ecdc4;
+    border: 1px solid #4ecdc4;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.empty-state {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+}
+
+.empty-state h3 {
+    color: #4ecdc4;
+    margin-bottom: 1rem;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+    
+    .profile-header h1 {
+        font-size: 2rem;
+    }
+    
+    .profile-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-    <div class="dashboard-container">
-        <div class="dashboard-header">
-            <h1>Your Profile</h1>
-            <p class="dashboard-subtitle">Manage your account settings</p>
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>My Account</h1>
+        <p>Welcome back, {{ user.username }}!</p>
+    </div>
+
+    <!-- Profile Information -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Profile Information</h2>
         </div>
         
-        <div class="profile-content">
-            <div class="profile-card">
-                <div class="profile-info">
-                    <div class="profile-avatar">
-                        <div class="avatar-circle">
-                            {{ user.username|first|upper }}
-                        </div>
-                    </div>
-                    
-                    <div class="profile-details">
-                        <h2>{{ user.username }}</h2>
-                        {% if user.email %}
-                            <p class="profile-email">{{ user.email }}</p>
-                        {% endif %}
-                        <p class="profile-joined">Member since {{ user.date_joined|date:"F Y" }}</p>
-                    </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
                 </div>
-                
-                <div class="profile-stats">
-                    <div class="stat-item">
-                        <h3>{{ user.date_joined|timesince }}</h3>
-                        <p>Time as member</p>
-                    </div>
-                    <div class="stat-item">
-                        <h3>Early Access</h3>
-                        <p>Account Type</p>
-                    </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post" style="max-width: 500px;">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="first_name" style="display: block; color: #4ecdc4; font-weight: 600; margin-bottom: 0.5rem;">First Name:</label>
+                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" 
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
+                       placeholder="Enter your first name" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="last_name" style="display: block; color: #4ecdc4; font-weight: 600; margin-bottom: 0.5rem;">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" 
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
+                       placeholder="Enter your last name" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                Update Profile
+            </button>
+        </form>
+        
+        {% if not user.first_name or not user.last_name %}
+            <div style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 1px solid #ffeaa7;">
+                <strong>⚠️ Action Required:</strong> Please set your first and last name to purchase DLO licenses. 
+                These names will be used for blockchain controller generation and cannot be changed after license purchase.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Account Information -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Account Information</h2>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <div>
+                <label style="display: block; color: #4ecdc4; font-weight: 600; margin-bottom: 0.5rem;">Username:</label>
+                <div style="padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    {{ user.username }}
                 </div>
             </div>
             
-            <div class="profile-actions">
-                <div class="action-card">
-                    <h3>Account Settings</h3>
-                    <p>Update your account information and preferences</p>
-                    <button class="btn secondary" disabled>Edit Settings (Coming Soon)</button>
-                </div>
-                
-                <div class="action-card">
-                    <h3>Security</h3>
-                    <p>Manage your password and security settings</p>
-                    <button class="btn secondary" disabled>Change Password (Coming Soon)</button>
+            <div>
+                <label style="display: block; color: #4ecdc4; font-weight: 600; margin-bottom: 0.5rem;">Email Address:</label>
+                <div style="padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    {{ user.email }}
                 </div>
             </div>
-        </div>
-        
-        <div class="dashboard-actions">
-            <a href="{% url 'core:dashboard' %}" class="btn primary">Back to Dashboard</a>
-            <a href="{% url 'accounts:logout' %}" class="btn danger">Logout</a>
+            
+            <div style="grid-column: 1 / -1;">
+                <label style="display: block; color: #4ecdc4; font-weight: 600; margin-bottom: 0.5rem;">Unique Identifier (UUID):</label>
+                <div style="padding: 0.75rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); font-family: 'Courier New', monospace; word-break: break-all; position: relative;">
+                    <span id="uuid-text">{{ user_profile.uuid }}</span>
+                    <button type="button" onclick="copyUUID()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #4ecdc4; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Copy</button>
+                </div>
+                <small style="color: #666; margin-top: 0.5rem; display: block;">
+                    This unique identifier links your account to your DLOIDs and blockchain controllers. Keep it secure.
+                </small>
+            </div>
         </div>
     </div>
+
+    <!-- Stats Overview -->
+    <div class="profile-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ user_profile.chauffecoins_balance|floatformat:0 }}</div>
+            <div class="stat-label">CHAUFFEcoins Balance</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ user_profile.total_licenses_purchased }}</div>
+            <div class="stat-label">Licenses Owned</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ orders.count }}</div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ user.date_joined|timesince }}</div>
+            <div class="stat-label">Member Since</div>
+        </div>
+    </div>
+
+    <!-- DLO Licenses Section -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Your DLO Licenses</h2>
+            <a href="{% url 'core:store' %}" class="btn btn-primary">Buy More Licenses</a>
+        </div>
+        
+        {% if licenses %}
+            {% for license in licenses %}
+            <div class="license-card">
+                <div class="license-header">
+                    <div>
+                        <h4>License <span class="license-number">{{ license.license_number }}</span></h4>
+                        <p>{{ license.order.product.name }}</p>
+                    </div>
+                    <div class="status-badge status-{{ license.status }}">
+                        {{ license.get_status_display }}
+                    </div>
+                </div>
+                
+                <div class="license-details">
+                    <p><strong>Controller Name:</strong> {{ license.controller_name|default:"Not generated yet" }}</p>
+                    <p><strong>Issued:</strong> {{ license.issued_at|date:"F j, Y g:i A" }}</p>
+                    <p><strong>CHAUFFEcoins Included:</strong> {{ license.order.product.chauffecoins_included|floatformat:0 }}</p>
+                    
+                    {% if not license.controller_name %}
+                        <div style="margin-top: 1rem;">
+                            <a href="{% url 'core:controller_generator' %}?order_id={{ license.order.id }}" class="btn btn-secondary">
+                                Generate Controller Name
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h3>No licenses yet</h3>
+                <p>Purchase your first DLO license to get started with CHAUFFE!</p>
+                <div style="margin-top: 1rem;">
+                    <a href="{% url 'core:store' %}" class="btn btn-primary">Browse Store</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="section">
+        <div class="section-header">
+            <h2>CHAUFFEcoin Transactions</h2>
+            <span>Recent Activity</span>
+        </div>
+        
+        {% if transactions %}
+            {% for transaction in transactions %}
+            <div class="transaction-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4>{{ transaction.get_transaction_type_display }}</h4>
+                        <p>{{ transaction.description }}</p>
+                        <small>{{ transaction.created_at|date:"F j, Y g:i A" }}</small>
+                    </div>
+                    <div class="transaction-amount transaction-{{ transaction.transaction_type }}">
+                        {% if transaction.transaction_type == 'spent' %}-{% else %}+{% endif %}{{ transaction.amount|floatformat:0 }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h3>No transactions yet</h3>
+                <p>Purchase a license to start earning CHAUFFEcoins!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Recent Orders</h2>
+        </div>
+        
+        {% if orders %}
+            {% for order in orders %}
+            <div class="order-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4>{{ order.product.name }}</h4>
+                        <p>Order #{{ order.id }}</p>
+                        <p>Quantity: {{ order.quantity }} | Total: ${{ order.total_amount }}</p>
+                        <small>{{ order.created_at|date:"F j, Y g:i A" }}</small>
+                    </div>
+                    <div class="status-badge status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h3>No orders yet</h3>
+                <p>Start shopping to see your order history here.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div style="text-align: center; margin-top: 3rem;">
+        <a href="{% url 'core:store' %}" class="btn btn-primary">Visit Store</a>
+        <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<script>
+function copyUUID() {
+    const uuidText = document.getElementById('uuid-text').innerText;
+    navigator.clipboard.writeText(uuidText).then(function() {
+        // Show success feedback
+        const button = event.target;
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        button.style.background = '#28a745';
+        
+        setTimeout(() => {
+            button.innerText = originalText;
+            button.style.background = '#4ecdc4';
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Could not copy UUID: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = uuidText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        const button = event.target;
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        button.style.background = '#28a745';
+        
+        setTimeout(() => {
+            button.innerText = originalText;
+            button.style.background = '#4ecdc4';
+        }, 2000);
+    });
+}
+</script>
 {% endblock %}

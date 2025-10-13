@@ -11,6 +11,16 @@
         </div>
         
         <div class="dashboard-content">
+            {% if not user.first_name or not user.last_name %}
+            <div class="dashboard-card warning-card">
+                <h3>⚠️ Complete Your Profile</h3>
+                <p>Your profile is incomplete. To access all features including the store, cart, and checkout, please update your first and last name.</p>
+                <div class="warning-actions">
+                    <a href="{% url 'accounts:profile' %}" class="btn warning">Complete Profile Now</a>
+                </div>
+            </div>
+            {% endif %}
+            
             <div class="dashboard-cards">
                 <div class="dashboard-card">
                     <h3>🚀 Early Access Status</h3>
