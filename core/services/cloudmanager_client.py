@@ -127,6 +127,7 @@ class CloudManagerClient:
         total_blockchains = len(blockchains)
         total_blocks = 0
         total_transactions = 0
+        total_chauffecoins = 0
         controller_names = []
         dloid_parameters = []
         
@@ -138,6 +139,19 @@ class CloudManagerClient:
             chain_info = details.get('chain_info', {})
             total_blocks += chain_info.get('length', 0)
             total_transactions += chain_info.get('pending_transactions', 0)
+            
+            # Extract CHAUFFEcoin quantity from DLOID parameters
+            # DLOID parameter format: [0-9: CHAUFFEcoin quantity][10: partnership][11: collateralizable][12: inheritance][13: convertibility][14-22: rating][23: share eligible][24: redeemability]
+            dloid_params = metadata.get('dloid_params', '')
+            if dloid_params and len(dloid_params) >= 10:
+                try:
+                    # First 10 characters of DLOID params are CHAUFFEcoin quantity (zero-padded)
+                    chauffe_quantity_str = dloid_params[:10]
+                    chauffe_quantity = int(chauffe_quantity_str)
+                    total_chauffecoins += chauffe_quantity
+                except (ValueError, TypeError):
+                    # If parsing fails, skip this blockchain's contribution
+                    pass
             
             # Extract blockchain metadata
             if metadata.get('controller_name'):
@@ -167,6 +181,7 @@ class CloudManagerClient:
                 'total_blockchains': total_blockchains,
                 'total_blocks': total_blocks,
                 'total_transactions': total_transactions,
+                'total_chauffecoins': total_chauffecoins,
                 'controller_names': controller_names,
                 'dloid_parameters': dloid_parameters
             },

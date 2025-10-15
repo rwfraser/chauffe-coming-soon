@@ -78,6 +78,7 @@ def profile(request):
         'total_blockchains': 0,
         'total_blocks': 0,
         'total_transactions': 0,
+        'total_chauffecoins': 0,
         'controller_names': [],
         'dloid_parameters': []
     }

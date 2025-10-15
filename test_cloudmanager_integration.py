@@ -91,6 +91,7 @@ def test_cloudmanager_client():
                 print(f"   User's blockchains: {summary.get('total_blockchains', 0)}")
                 print(f"   Controller names: {len(summary.get('controller_names', []))}")
                 print(f"   DLOID parameters: {len(summary.get('dloid_parameters', []))}")
+                print(f"   Total CHAUFFEcoins: {summary.get('total_chauffecoins', 0):,}")
                 print(f"   Total blocks: {summary.get('total_blocks', 0)}")
             else:
                 print(f"⚠️ No blockchain data for user: {user_blockchains.get('error', 'Unknown error')}")
