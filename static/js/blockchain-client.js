@@ -134,6 +134,7 @@ class BlockchainClient {
                     first_name: 'APITest',
                     last_name: 'User',
                     existing_licenses: 0,
+                    user_uuid: '12345678-1234-5678-9abc-123456789abc', // Test UUID
                     dloid_params: {
                         firstName: 'APITest',
                         lastName: 'User',
@@ -202,13 +203,18 @@ class BlockchainClient {
         return testResults;
     }
     
-    async createBlockchain(name, dloidParams) {
+    async createBlockchain(name, dloidParams, userUuid = null) {
         const endpoint = `${this.baseUrl}/api/blockchains`;
         console.log('=== BLOCKCHAIN CREATION DEBUG ===');
         console.log('Endpoint URL:', endpoint);
         console.log('Method: POST');
-        console.log('Payload:', { name, first_name: dloidParams.firstName, last_name: dloidParams.lastName });
+        console.log('Payload:', { name, first_name: dloidParams.firstName, last_name: dloidParams.lastName, user_uuid: userUuid });
         console.log('Full dloidParams:', dloidParams);
+        
+        // Validate required user UUID
+        if (!userUuid) {
+            throw new Error('user_uuid is required for blockchain creation');
+        }
         
         // Check API version if not already done
         if (!this.apiVersionChecked) {
@@ -235,6 +241,7 @@ class BlockchainClient {
                     first_name: dloidParams.firstName,
                     last_name: dloidParams.lastName,
                     existing_licenses: parseInt(dloidParams.priorDloidQty) || 0,
+                    user_uuid: userUuid,
                     dloid_params: dloidParams
                 })
             });

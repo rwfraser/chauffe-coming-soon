@@ -73,12 +73,19 @@ def controller_generator(request):
         except Order.DoesNotExist:
             messages.error(request, 'Order not found or access denied.')
     
+    # Get or create user profile to access UUID
+    user_profile, created = UserProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'chauffecoins_balance': 0}
+    )
+    
     return render(request, 'core/controller_generator.html', {
         'title': 'Controller Name Generator - My Chauffe',
         'purchase_context': purchase_context,
         'order': order,
         'user_first_name': request.user.first_name or '',
-        'user_last_name': request.user.last_name or ''
+        'user_last_name': request.user.last_name or '',
+        'user_uuid': user_profile.get_uuid_string()
     })
 
 

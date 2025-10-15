@@ -425,7 +425,7 @@
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             retryStats.totalAttempts++;
             try {
-                const result = await client.createBlockchain(name.trim(), dloidParams);
+                const result = await client.createBlockchain(name.trim(), dloidParams, '{{ user_uuid }}');
                 
                 // If we get a result but it's not successful, treat as error
                 if (!result || !result.success) {
@@ -622,23 +622,52 @@
                 console.log('Controller name:', result.controller_name);
                 console.log('Raw DLOID params from API:', result.dloid_params);
                 
-                // WORKAROUND: Extract actual DLOID parameters from CloudManager response
-                // CloudManager incorrectly prepends controller name to DLOID params
+                // Handle DLOID parameter format from CloudManager response
                 let originalDloidParams = result.dloid_params;
                 let hadDloidIssue = false;
+                let dloidFormatInfo = '';
                 
-                if (result.dloid_params && result.dloid_params.length > 57) {
-                    hadDloidIssue = true;
-                    // Extract the last 57 characters or the part after the controller name
-                    if (result.controller_name && result.dloid_params.startsWith(result.controller_name)) {
-                        result.dloid_params = result.dloid_params.substring(result.controller_name.length);
-                        console.log('Extracted DLOID params (after controller name):', result.dloid_params);
+                if (result.dloid_params) {
+                    const dloidLength = result.dloid_params.length;
+                    console.log(`DLOID params length: ${dloidLength}`);
+                    
+                    if (dloidLength === 25) {
+                        // New CloudManager format: 25-character DLOID parameters only
+                        dloidFormatInfo = 'New format (25 chars): DLOID parameters only';
+                        console.log('Using new CloudManager format (25 chars):', result.dloid_params);
+                        
+                        // Construct full 57-character string: Controller Name (32) + DLOID Params (25)
+                        if (result.controller_name && result.controller_name.length === 32) {
+                            const fullDloidString = result.controller_name + result.dloid_params;
+                            console.log('Constructed 57-char DLOID string:', fullDloidString);
+                            result.dloid_params = fullDloidString;
+                        }
+                        
+                    } else if (dloidLength === 57) {
+                        // Expected format: 57-character string (Controller Name + DLOID)
+                        dloidFormatInfo = 'Expected format (57 chars): Controller Name + DLOID params';
+                        console.log('Using expected 57-character format:', result.dloid_params);
+                        
+                    } else if (dloidLength > 57) {
+                        // Legacy workaround: CloudManager incorrectly prepends controller name
+                        hadDloidIssue = true;
+                        dloidFormatInfo = `Legacy issue (${dloidLength} chars): Extra data prepended`;
+                        
+                        if (result.controller_name && result.dloid_params.startsWith(result.controller_name)) {
+                            result.dloid_params = result.dloid_params.substring(result.controller_name.length);
+                            console.log('Extracted DLOID params (after controller name):', result.dloid_params);
+                        } else {
+                            result.dloid_params = result.dloid_params.substring(result.dloid_params.length - 57);
+                            console.log('Extracted DLOID params (last 57 chars):', result.dloid_params);
+                        }
                     } else {
-                        result.dloid_params = result.dloid_params.substring(result.dloid_params.length - 57);
-                        console.log('Extracted DLOID params (last 57 chars):', result.dloid_params);
+                        // Unexpected format
+                        dloidFormatInfo = `Unexpected format (${dloidLength} chars): Unknown structure`;
+                        console.warn('Unexpected DLOID parameter length:', dloidLength);
                     }
                 }
                 console.log('Final DLOID params:', result.dloid_params);
+                console.log('DLOID format info:', dloidFormatInfo);
             
                 if (result && result.success) {
                 window.generationInProgress = false;
@@ -694,7 +723,7 @@
                                 <h4>${isMultipleLicenses ? 'Last Generated Controller Name (32 hex):' : 'Generated Controller Name (32 hex):'}</h4>
                                 <div class="code-block">${result.controller_name || 'Not generated'}</div>
                                 
-                                <h4 style="margin-top: 1.5rem;">${isMultipleLicenses ? 'Last DLOID Parameter String (57 chars):' : 'DLOID Parameter String (57 chars):'}</h4>
+                                <h4 style="margin-top: 1.5rem;">${isMultipleLicenses ? 'Last DLOID Parameter String (Controller+DLOID):' : 'DLOID Parameter String (Controller+DLOID):'}</h4>
                                 <div class="code-block">${result.dloid_params || 'Not generated'}</div>
                                 
                                 <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
@@ -740,7 +769,11 @@
                         <div class="debug-section" id="debugInfo" style="display: none;">
                             <strong>Debug - Raw API Response:</strong><br>
                             <pre>${JSON.stringify(result, null, 2)}</pre>
-                            ${hadDloidIssue ? `<br><strong>CloudManager Issue Detected:</strong><br>Original DLOID String: <code>${originalDloidParams}</code><br>Corrected DLOID String: <code>${result.dloid_params}</code><br><strong>Issue:</strong> CloudManager prepended controller name to DLOID parameters (fixed automatically)` : ''}
+                            <br><strong>DLOID Format Processing:</strong><br>
+                            Format: <code>${dloidFormatInfo}</code><br>
+                            Original DLOID String: <code>${originalDloidParams}</code> (Length: ${originalDloidParams?.length || 0})<br>
+                            Final DLOID String: <code>${result.dloid_params}</code> (Length: ${result.dloid_params?.length || 0})<br>
+                            ${hadDloidIssue ? `<strong>⚠️ Issue:</strong> CloudManager returned unexpected format (fixed automatically)` : `<strong>✅ Status:</strong> DLOID format handled correctly`}
                         </div>
                         <button class="toggle-btn" type="button" onclick="toggleDebug()">
                             Toggle Debug Info
