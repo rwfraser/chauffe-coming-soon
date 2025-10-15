@@ -1,14 +1,33 @@
 # CloudManager.py Compatibility Documentation
 
-## My Chauffe Web App v0.9.0 - CloudManager Requirements
+## My Chauffe Web App v1.0.0 - CloudManager Requirements
 
-This document specifies the CloudManager.py API requirements and compatibility for **My Chauffe Web Application v0.9.0**.
+This document specifies the CloudManager.py API requirements and compatibility for **My Chauffe Web Application v1.0.0**.
+
+---
+
+## 🔄 **Major Version Compatibility System**
+
+**IMPORTANT:** Starting with v1.0.0, both applications follow a **major version compatibility model**:
+
+- **Compatible Versions:** Applications with the same major version number are compatible
+- **Breaking Changes:** Any breaking change in either application requires major version bump in BOTH
+- **Current Compatibility:** My Chauffe v1.x.x ↔ CloudManager.py v1.x.x
+
+### Version Matrix
+| My Chauffe | CloudManager.py | Status |
+|------------|-----------------|--------|
+| v1.x.x     | v1.x.x         | ✅ Compatible |
+| v1.x.x     | v2.x.x         | ❌ Incompatible |
+| v2.x.x     | v1.x.x         | ❌ Incompatible |
+| v2.x.x     | v2.x.x         | ✅ Compatible |
 
 ---
 
 ## 📋 **Required CloudManager.py Version**
 
-- **Minimum Version:** v1.2.0 or later
+- **Major Version:** v1.x.x (any v1 release)
+- **Minimum Version:** v1.0.0 or later
 - **Recommended Version:** v1.3.0+
 - **Last Tested With:** v1.3.0
 
@@ -192,17 +211,20 @@ The web app continuously monitors CloudManager health via:
 
 ## 📝 **Version History & Changes**
 
-### My Chauffe v0.9.0 Changes
+### My Chauffe v1.0.0 (Major Release)
+- **BREAKING:** Established major version compatibility system with CloudManager.py
 - **Added:** Asynchronous profile loading to prevent CloudManager delays
-- **Added:** Purchase success page with controller generation links
+- **Added:** Purchase success page with controller generation links  
 - **Enhanced:** Error handling for CloudManager connectivity issues
 - **Improved:** User experience with loading states and progressive updates
+- **Formalized:** API compatibility requirements and versioning strategy
 
-### CloudManager API Changes Required
+### CloudManager.py v1.x.x Requirements
 - Support for user UUID-based blockchain filtering
 - Consistent DLOID parameter format (25-character string)
-- Reliable health check endpoint
+- Reliable health check endpoint with version information
 - Controller name and role metadata storage
+- **MUST:** Report major version v1.x.x in `/api/version` endpoint
 
 ---
 
@@ -256,5 +278,6 @@ For CloudManager.py compatibility issues:
 4. Test individual API endpoints using the web app's API test page
 
 **Last Updated:** October 15, 2025  
-**Documentation Version:** 1.0  
-**Compatible with:** My Chauffe Web App v0.9.0
+**Documentation Version:** 2.0  
+**Compatible with:** My Chauffe Web App v1.0.0  
+**Requires:** CloudManager.py v1.x.x

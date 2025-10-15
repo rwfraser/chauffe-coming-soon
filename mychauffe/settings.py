@@ -15,7 +15,7 @@ import os
 from environs import Env
 
 # Application version
-__version__ = '0.9.0'
+__version__ = '1.0.0'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

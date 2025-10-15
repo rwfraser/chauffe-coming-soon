@@ -22,7 +22,7 @@ class CloudManagerClient:
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',
-            'User-Agent': 'MyChauffe-WebApp/1.0'
+            'User-Agent': 'MyChauffe-WebApp/1.0.0'
         })
     
     def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
