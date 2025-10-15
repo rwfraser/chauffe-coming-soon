@@ -186,3 +186,29 @@ STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY', default='pk_test_')
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='sk_test_')
 STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
 STRIPE_CURRENCY = 'usd'
+
+# CloudManager API Configuration
+CLOUDMANAGER_API_URL = env('CLOUDMANAGER_API_URL', default='http://localhost:5000')
+CLOUDMANAGER_TIMEOUT = env.int('CLOUDMANAGER_TIMEOUT', default=10)
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'core.services.cloudmanager_client': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

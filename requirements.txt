@@ -3,3 +3,4 @@ django-environ==0.10.0
 whitenoise==6.5.0
 gunicorn==21.2.0
 stripe>=13.0.0
+requests>=2.31.0
