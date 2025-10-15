@@ -55,6 +55,7 @@ def purchase_success(request):
     
     return render(request, 'core/purchase_success.html', context)
 
+@login_required
 def controller_generator(request):
     """Controller name generator page - REQUIRES completed purchase"""
     order_id = request.GET.get('order_id')
@@ -69,7 +70,20 @@ def controller_generator(request):
             id=order_id, user=request.user, status='completed'
         )
     except Order.DoesNotExist:
-        messages.error(request, 'Access denied: Invalid or unauthorized order. Controller generator is only available after completing a purchase.')
+        # Check if order exists at all
+        try:
+            existing_order = Order.objects.get(id=order_id)
+            if existing_order.user != request.user:
+                messages.error(request, f'Access denied: Order #{order_id} belongs to a different user.')
+            elif existing_order.status != 'completed':
+                messages.error(request, f'Access denied: Order #{order_id} has status "{existing_order.status}" - only completed orders can generate controllers.')
+            else:
+                messages.error(request, f'Access denied: Unable to access order #{order_id}.')
+        except Order.DoesNotExist:
+            messages.error(request, f'Order #{order_id} not found. Please check your purchase history.')
+        return redirect('core:store')
+    except Exception as e:
+        messages.error(request, f'Error accessing order: {str(e)}')
         return redirect('core:store')
     
     # Calculate license count from transaction
@@ -92,6 +106,11 @@ def controller_generator(request):
         'chauffecoins_earned': order.product.chauffecoins_included * order.quantity,
         'is_post_purchase': True
     }
+    
+    # Check if user has required profile information
+    if not request.user.first_name or not request.user.last_name:
+        messages.error(request, 'Please complete your profile with your first and last name before generating controllers. These names will be permanently associated with your licenses.')
+        return redirect('accounts:profile')
     
     # Get or create user profile to access UUID
     user_profile, created = UserProfile.objects.get_or_create(

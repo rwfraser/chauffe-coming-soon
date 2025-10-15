@@ -150,10 +150,20 @@
                 <h3>🎯 Ready to Generate Your Blockchain Controllers?</h3>
                 <p>Your purchase is complete! You can now generate blockchain controllers and DLOID parameters for your licenses.</p>
                 
+                {% if not user.first_name or not user.last_name %}
+                    <div style="background: rgba(255, 193, 7, 0.2); color: #856404; padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 193, 7, 0.4);">
+                        <strong>⚠️ Profile Required:</strong> You need to set your first and last name in your profile before generating controllers. These names will be permanently associated with your blockchain licenses.
+                        <div style="margin-top: 0.5rem;">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-primary" style="background: #ffc107; color: #212529;">Complete Your Profile First</a>
+                        </div>
+                    </div>
+                {% endif %}
+                
                 {% for order in completed_orders %}
                     <a href="{% url 'core:controller_generator' %}?order_id={{ order.id }}" class="btn btn-primary">
                         Generate Controllers for Order #{{ order.id|truncatechars:8 }}
                     </a>
+                    <br><small style="color: rgba(255,255,255,0.7); font-family: monospace;">Debug: order_id={{ order.id }} | status={{ order.status }}</small><br>
                 {% endfor %}
                 
                 <div style="margin-top: 1rem;">
