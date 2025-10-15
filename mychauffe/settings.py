@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from environs import Env
+import environ
 
 # Application version
 __version__ = '1.0.0'
