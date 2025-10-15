@@ -129,26 +129,29 @@
             <p>Thank you for your purchase. Your DLO license(s) have been activated.</p>
         </div>
 
-        {% if completed_orders %}
+        {% if most_recent_order %}
             <div class="order-summary">
-                <h3>Order Summary</h3>
-                {% for order in completed_orders %}
+                <h3>Recent Purchase</h3>
                 <div class="order-item">
                     <div>
-                        <strong>{{ order.product.name }}</strong><br>
-                        <small>Order #{{ order.id|truncatechars:13 }} • {{ order.created_at|date:"F j, Y" }}</small>
+                        <strong>{{ most_recent_order.product.name }}</strong><br>
+                        <small>Order #{{ most_recent_order.id|truncatechars:13 }} • {{ most_recent_order.created_at|date:"F j, Y" }}</small>
                     </div>
                     <div>
-                        <strong>${{ order.total_amount }}</strong><br>
-                        <small>Qty: {{ order.quantity }}</small>
+                        <strong>${{ most_recent_order.total_amount }}</strong><br>
+                        <small>Qty: {{ most_recent_order.quantity }}</small>
                     </div>
                 </div>
-                {% endfor %}
+                {% if completed_orders.count > 1 %}
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <small style="color: #666;">You have {{ completed_orders.count }} total completed orders • <a href="{% url 'accounts:profile' %}" style="color: #4ecdc4;">View all in profile</a></small>
+                    </div>
+                {% endif %}
             </div>
 
             <div class="controller-access">
-                <h3>🎯 Ready to Generate Your Blockchain Controllers?</h3>
-                <p>Your purchase is complete! You can now generate blockchain controllers and DLOID parameters for your licenses.</p>
+                <h3>🎯 Ready to Create Your Controllers?</h3>
+                <p>Your recent purchase of <strong>{{ most_recent_order.quantity }} {{ most_recent_order.product.name }}{% if most_recent_order.quantity > 1 %}s{% endif %}</strong> is ready for controller generation!</p>
                 
                 {% if not user.first_name or not user.last_name %}
                     <div style="background: rgba(255, 193, 7, 0.2); color: #856404; padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(255, 193, 7, 0.4);">
@@ -157,29 +160,32 @@
                             <a href="{% url 'accounts:profile' %}" class="btn btn-primary" style="background: #ffc107; color: #212529;">Complete Your Profile First</a>
                         </div>
                     </div>
+                {% else %}
+                    <div style="text-align: center; margin: 2rem 0;">
+                        <a href="{% url 'core:controller_generator' %}?order_id={{ most_recent_order.id }}" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 2rem;">
+                            🎯 Proceed to Create Controllers
+                            {% if most_recent_order.quantity > 1 %} ({{ most_recent_order.quantity }} controllers){% endif %}
+                        </a>
+                    </div>
+                    <p style="text-align: center; color: rgba(255,255,255,0.8); font-size: 0.9rem;">You'll configure DLOID parameters and generate {{ most_recent_order.quantity }} blockchain controller{% if most_recent_order.quantity > 1 %}s{% endif %}</p>
                 {% endif %}
                 
-                {% for order in completed_orders %}
-                    <a href="{% url 'core:controller_generator' %}?order_id={{ order.id }}" class="btn btn-primary">
-                        Generate Controllers for Order #{{ order.id|truncatechars:8 }}
-                    </a>
-                    <br><small style="color: rgba(255,255,255,0.7); font-family: monospace;">Debug: order_id={{ order.id }} | status={{ order.status }}</small><br>
-                {% endfor %}
-                
-                <div style="margin-top: 1rem;">
+                <div style="margin-top: 1.5rem; text-align: center;">
                     <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">View Your Profile</a>
                 </div>
             </div>
 
+            {% if most_recent_order %}
             <div class="next-steps">
                 <h4>📋 Next Steps:</h4>
                 <ol>
-                    <li><strong>Generate Controllers:</strong> Click the buttons above to create your blockchain controllers</li>
-                    <li><strong>Set DLOID Parameters:</strong> Configure your CHAUFFEcoin quantities and license attributes</li>
-                    <li><strong>View Your Blockchains:</strong> Monitor your blockchain assets in your profile</li>
-                    <li><strong>Explore Features:</strong> Test the CloudManager API integration</li>
+                    <li><strong>Create Controllers:</strong> Click "Proceed to Create Controllers" to start the generation process</li>
+                    <li><strong>Configure DLOID Parameters:</strong> Set CHAUFFEcoin quantities, partnership status, and other blockchain attributes</li>
+                    <li><strong>Generate {{ most_recent_order.quantity }} Controller{% if most_recent_order.quantity > 1 %}s{% endif %}:</strong> The system will create blockchain controller{% if most_recent_order.quantity > 1 %}s{% endif %} with sequential ratings</li>
+                    <li><strong>Monitor Your Assets:</strong> View your new blockchain controllers and DLOID parameters in your profile</li>
                 </ol>
             </div>
+            {% endif %}
 
         {% else %}
             <div style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 8px; margin: 1rem 0;">

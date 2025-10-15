@@ -42,7 +42,13 @@ def purchase_success(request):
     """
     Display purchase success page with completed orders and controller generator access
     """
-    # Get completed orders for the current user
+    # Get the most recent completed order for the current user
+    most_recent_order = Order.objects.filter(
+        user=request.user,
+        status='completed'
+    ).order_by('-created_at').first()
+    
+    # Also get all completed orders for display in summary
     completed_orders = Order.objects.filter(
         user=request.user,
         status='completed'
@@ -51,6 +57,7 @@ def purchase_success(request):
     context = {
         'title': 'Purchase Success',
         'completed_orders': completed_orders,
+        'most_recent_order': most_recent_order,
     }
     
     return render(request, 'core/purchase_success.html', context)
