@@ -59,7 +59,7 @@ class License(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='licenses')
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='license')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='licenses')
     license_number = models.CharField(max_length=50, unique=True, blank=True)
     controller_name = models.CharField(max_length=200, blank=True)
     first_name = models.CharField(max_length=100, blank=True)

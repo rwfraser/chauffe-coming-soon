@@ -440,11 +440,12 @@ def handle_successful_payment(request, orders, payment_intent, total_chauffecoin
             order.status = 'completed'
             order.save()
             
-            # Create license for each order
-            license_obj = License.objects.create(
-                user=request.user,
-                order=order
-            )
+            # Create licenses based on order quantity
+            for i in range(order.quantity):
+                license_obj = License.objects.create(
+                    user=request.user,
+                    order=order
+                )
         
         # Get or create user profile
         user_profile, created = UserProfile.objects.get_or_create(
@@ -461,8 +462,9 @@ def handle_successful_payment(request, orders, payment_intent, total_chauffecoin
                 order=orders[0] if orders else None
             )
         
-        # Update license count
-        user_profile.total_licenses_purchased += len(orders)
+        # Update license count - account for quantity in each order
+        total_licenses = sum(order.quantity for order in orders)
+        user_profile.total_licenses_purchased += total_licenses
         user_profile.save()
         
         # Clear cart
@@ -538,8 +540,11 @@ def handle_payment_intent_succeeded(payment_intent):
                 order.status = 'completed'
                 order.save()
                 
-                # Create license if not exists
-                if not hasattr(order, 'license'):
+                # Create licenses if they don't exist (based on order quantity)
+                existing_licenses = License.objects.filter(order=order).count()
+                licenses_needed = order.quantity - existing_licenses
+                
+                for i in range(licenses_needed):
                     License.objects.create(
                         user=user,
                         order=order
@@ -561,7 +566,8 @@ def handle_payment_intent_succeeded(payment_intent):
                 order=orders.first() if orders else None
             )
             
-            user_profile.total_licenses_purchased += len(orders)
+            total_licenses = sum(order.quantity for order in orders)
+            user_profile.total_licenses_purchased += total_licenses
             user_profile.save()
         
         print(f'Successfully processed payment intent {payment_intent_id} for user {user_id}')

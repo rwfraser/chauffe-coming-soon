@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.api-test-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.api-test-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.api-test-header h1 {
+    color: #4ecdc4;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.test-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.test-section h2 {
+    color: #4ecdc4;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-unknown { background: #6c757d; }
+.status-success { background: #28a745; }
+.status-warning { background: #ffc107; }
+.status-failure { background: #dc3545; }
+
+.test-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.test-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.test-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.test-btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #4ecdc4;
+    border: 1px solid #4ecdc4;
+}
+
+.test-btn-warning {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    color: white;
+}
+
+.test-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.test-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.test-results {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.test-result-item {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #6c757d;
+}
+
+.result-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.result-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.result-failure {
+    background: rgba(220, 53, 69, 0.1);
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.version-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.version-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.version-card h4 {
+    color: #4ecdc4;
+    margin-bottom: 0.5rem;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    display: none;
+}
+
+.alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    color: #0c5460;
+    border: 1px solid rgba(23, 162, 184, 0.3);
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #155724;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #856404;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #721c24;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+@media (max-width: 768px) {
+    .api-test-container {
+        padding: 1rem;
+    }
+    
+    .api-test-header h1 {
+        font-size: 2rem;
+    }
+    
+    .test-controls {
+        flex-direction: column;
+    }
+    
+    .version-info {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="api-test-container">
+    <div class="api-test-header">
+        <h1>CloudManager API Test Suite</h1>
+        <p>Test and validate integration between MyChauffe website and CloudManager.py API</p>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <!-- API Status Section -->
+    <div class="test-section">
+        <h2>
+            <span class="status-indicator status-unknown" id="api-status-indicator"></span>
+            API Connection Status
+        </h2>
+        
+        <div class="test-controls">
+            <button class="test-btn test-btn-primary" onclick="performHealthCheck()">
+                🔍 Check API Health
+            </button>
+            <button class="test-btn test-btn-secondary" onclick="runFullApiTest()">
+                🧪 Run Full API Test
+            </button>
+            <button class="test-btn test-btn-warning" onclick="testBlockchainCreation()">
+                ⚙️ Test Blockchain Creation
+            </button>
+        </div>
+
+        <div class="version-info" id="version-info" style="display: none;">
+            <div class="version-card">
+                <h4>Website Version</h4>
+                <p>MyChauffe Frontend: <span id="website-version">2.0.0</span></p>
+                <p>Expected API: <span id="expected-api-version">1.0.0</span></p>
+            </div>
+            <div class="version-card">
+                <h4>CloudManager API</h4>
+                <p>Version: <span id="api-version">Unknown</span></p>
+                <p>Status: <span id="api-health-status">Unknown</span></p>
+                <p>Blockchains: <span id="blockchain-count">Unknown</span></p>
+            </div>
+            <div class="version-card">
+                <h4>Compatibility</h4>
+                <p>Compatible: <span id="compatibility-status">Unknown</span></p>
+                <p>Last Checked: <span id="last-check-time">Never</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Results Section -->
+    <div class="test-section">
+        <h2>
+            <span class="status-indicator status-unknown" id="test-status-indicator"></span>
+            Test Results
+        </h2>
+        
+        <div class="test-results" id="test-results">
+            <p style="color: #666; text-align: center; margin: 2rem 0;">
+                Click "Check API Health" or "Run Full API Test" to begin testing
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div style="text-align: center; margin-top: 3rem;">
+        <a href="{% url 'core:controller_generator' %}" class="test-btn test-btn-secondary">Controller Generator</a>
+        <a href="{% url 'core:dashboard' %}" class="test-btn test-btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/blockchain-client.js' %}?v=2.3"></script>
+<script>
+let testClient = null;
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Create test client
+    testClient = window.blockchainClient || blockchainClient || new BlockchainClient('http://localhost:5000');
+    console.log('API Test Suite initialized');
+    
+    // Set website version info
+    document.getElementById('website-version').textContent = '2.0.0';
+    document.getElementById('expected-api-version').textContent = testClient.expectedApiVersion;
+    
+    // Show version info
+    document.getElementById('version-info').style.display = 'grid';
+    
+    // Auto-run health check
+    setTimeout(() => {
+        showAlert('Auto-running API health check...', 'info');
+        performHealthCheck();
+    }, 1000);
+});
+
+async function performHealthCheck() {
+    updateStatusIndicator('api-status-indicator', 'unknown');
+    showAlert('Checking CloudManager API health...', 'info');
+    
+    try {
+        const result = await testClient.checkApiHealth();
+        displayHealthCheckResult(result);
+        updateVersionInfo(result);
+        
+        if (result.success) {
+            updateStatusIndicator('api-status-indicator', result.compatible ? 'success' : 'warning');
+            showAlert(result.message, result.compatible ? 'success' : 'warning');
+        } else {
+            updateStatusIndicator('api-status-indicator', 'failure');
+            showAlert(result.message, 'danger');
+        }
+    } catch (error) {
+        updateStatusIndicator('api-status-indicator', 'failure');
+        showAlert('Health check failed: ' + error.message, 'danger');
+        displayTestResult('Health Check Failed', error.message, 'failure');
+    }
+}
+
+async function runFullApiTest() {
+    updateStatusIndicator('test-status-indicator', 'unknown');
+    showAlert('Running comprehensive API test suite...', 'info');
+    clearTestResults();
+    
+    try {
+        const results = await testClient.testApiEndpoints();
+        displayFullTestResults(results);
+        
+        updateStatusIndicator('test-status-indicator', results.overall);
+        
+        if (results.overall === 'success') {
+            showAlert('All API tests passed successfully!', 'success');
+        } else if (results.overall === 'warning') {
+            showAlert('API tests completed with warnings', 'warning');
+        } else {
+            showAlert('Some API tests failed', 'danger');
+        }
+    } catch (error) {
+        updateStatusIndicator('test-status-indicator', 'failure');
+        showAlert('API test suite failed: ' + error.message, 'danger');
+        displayTestResult('Test Suite Error', error.message, 'failure');
+    }
+}
+
+async function testBlockchainCreation() {
+    showAlert('Testing blockchain creation with sample data...', 'info');
+    
+    const testData = {
+        firstName: 'TestUser',
+        lastName: 'APITest',
+        priorDloidQty: '0',
+        chauffeQuantity: '0000100000',
+        partnershipStatus: 'L',
+        collateralizable: 'N',
+        inheritance: 'Y',
+        convertibility: '2',
+        rating: '000025000',
+        shareEligible: 'N',
+        redeemability: 'P'
+    };
+    
+    try {
+        const result = await testClient.createBlockchain(`API Test ${new Date().toISOString()}`, testData);
+        
+        if (result && result.success) {
+            showAlert('Blockchain creation test successful!', 'success');
+            displayTestResult('Blockchain Creation Test', 
+                `✅ Successfully created test blockchain\n` +
+                `Controller: ${result.controller_name}\n` +
+                `Blockchain ID: ${result.blockchain_id}\n` +
+                `DLOID Params: ${result.dloid_params}`, 'success');
+        } else {
+            showAlert('Blockchain creation test failed', 'danger');
+            displayTestResult('Blockchain Creation Test', result?.error || 'Unknown error', 'failure');
+        }
+    } catch (error) {
+        showAlert('Blockchain creation test error: ' + error.message, 'danger');
+        displayTestResult('Blockchain Creation Test', error.message, 'failure');
+    }
+}
+
+function displayHealthCheckResult(result) {
+    const status = result.success ? (result.compatible ? 'success' : 'warning') : 'failure';
+    const message = `Health Check: ${result.message}`;
+    displayTestResult('API Health Check', message, status);
+}
+
+function displayFullTestResults(results) {
+    displayTestResult('Health Check', 
+        results.health?.message || 'No health data', 
+        results.health?.success ? 'success' : 'failure');
+    
+    displayTestResult('Blockchains Endpoint', 
+        results.blockchains?.message || 'No blockchain data', 
+        results.blockchains?.success ? 'success' : 'failure');
+    
+    displayTestResult('Blockchain Creation', 
+        results.createBlockchain?.message || 'No creation data', 
+        results.createBlockchain?.success ? 'success' : 'failure');
+    
+    const summary = `Overall Status: ${results.overall.toUpperCase()}`;
+    displayTestResult('Test Summary', summary, results.overall);
+}
+
+function displayTestResult(title, message, status) {
+    const resultsContainer = document.getElementById('test-results');
+    
+    // Clear "click to begin" message if it exists
+    if (resultsContainer.innerHTML.includes('Click "Check API Health"')) {
+        resultsContainer.innerHTML = '';
+    }
+    
+    const resultDiv = document.createElement('div');
+    resultDiv.className = `test-result-item result-${status}`;
+    resultDiv.innerHTML = `
+        <h4>${title}</h4>
+        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit;">${message}</pre>
+        <small style="opacity: 0.8;">${new Date().toLocaleTimeString()}</small>
+    `;
+    
+    resultsContainer.appendChild(resultDiv);
+    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+}
+
+function updateVersionInfo(result) {
+    if (result.healthData) {
+        document.getElementById('api-version').textContent = result.version || 'Unknown';
+        document.getElementById('api-health-status').textContent = result.success ? 'Online' : 'Offline';
+        document.getElementById('compatibility-status').textContent = result.compatible ? '✅ Compatible' : '⚠️ Warning';
+        
+        if (result.healthData.managed_blockchains !== undefined) {
+            document.getElementById('blockchain-count').textContent = result.healthData.managed_blockchains;
+        }
+    }
+    
+    document.getElementById('last-check-time').textContent = new Date().toLocaleTimeString();
+}
+
+function updateStatusIndicator(elementId, status) {
+    const indicator = document.getElementById(elementId);
+    indicator.className = `status-indicator status-${status}`;
+}
+
+function clearTestResults() {
+    document.getElementById('test-results').innerHTML = '<p style="color: #666;">Running tests...</p>';
+}
+
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alert-container');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+    
+    // Remove existing alerts
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

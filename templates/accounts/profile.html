@@ -296,8 +296,8 @@
             <div class="stat-label">CHAUFFEcoins Balance</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ user_profile.total_licenses_purchased }}</div>
-            <div class="stat-label">Licenses Owned</div>
+            <div class="stat-number">{{ licenses.count }}</div>
+            <div class="stat-label">Active Licenses</div>
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ orders.count }}</div>
@@ -339,6 +339,10 @@
                             <a href="{% url 'core:controller_generator' %}?order_id={{ license.order.id }}" class="btn btn-secondary">
                                 Generate Controller Name
                             </a>
+                        </div>
+                    {% else %}
+                        <div style="margin-top: 1rem;">
+                            <p><strong>DLOID Parameters:</strong> {{ license.dloid_parameters|default:"Not set yet"|truncatechars:50 }}</p>
                         </div>
                     {% endif %}
                 </div>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct API Test</title>
+</head>
+<body>
+    <h1>Direct CloudManager API Test</h1>
+    <button onclick="testHealthAPI()">Test Health API</button>
+    <button onclick="testBlockchainsGet()">Test GET Blockchains</button>
+    <button onclick="testBlockchainsPost()">Test POST Blockchains</button>
+    
+    <div id="results" style="margin-top: 20px; padding: 20px; background: #f0f0f0;">
+        <h3>Results will appear here:</h3>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toISOString() + ': ' + message + '\n';
+        }
+
+        async function testHealthAPI() {
+            log('Testing Health API...');
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                log('Health API Response: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('Health API Error: ' + error.message);
+            }
+        }
+
+        async function testBlockchainsGet() {
+            log('Testing GET /api/blockchains...');
+            try {
+                const response = await fetch('http://localhost:5000/api/blockchains');
+                const data = await response.json();
+                log('GET Blockchains Response: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('GET Blockchains Error: ' + error.message);
+            }
+        }
+
+        async function testBlockchainsPost() {
+            log('Testing POST /api/blockchains...');
+            try {
+                const payload = {
+                    name: 'Direct Test Blockchain',
+                    first_name: 'TestUser',
+                    last_name: 'DirectTest',
+                    existing_licenses: 0,
+                    dloid_params: {
+                        firstName: 'TestUser',
+                        lastName: 'DirectTest',
+                        priorDloidQty: '0',
+                        chauffeQuantity: '0000100000',
+                        partnershipStatus: 'L',
+                        collateralizable: 'N',
+                        inheritance: 'Y',
+                        convertibility: '2',
+                        rating: '000025000',
+                        shareEligible: 'N',
+                        redeemability: 'P'
+                    }
+                };
+                
+                log('POST Payload: ' + JSON.stringify(payload, null, 2));
+                
+                const response = await fetch('http://localhost:5000/api/blockchains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                log('POST Response Status: ' + response.status + ' ' + response.statusText);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('POST Blockchains SUCCESS: ' + JSON.stringify(data, null, 2));
+                } else {
+                    const errorText = await response.text();
+                    log('POST Blockchains ERROR: ' + errorText);
+                }
+            } catch (error) {
+                log('POST Blockchains Exception: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

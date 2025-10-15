@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Add to Cart</title>
+</head>
+<body>
+    <h1>Test Add to Cart</h1>
+    <button onclick="testAddToCart()">Test Add to Cart</button>
+    <div id="results" style="margin-top: 20px; padding: 20px; background: #f0f0f0;">
+        <h3>Results will appear here:</h3>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toISOString() + ': ' + message + '\n';
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function testAddToCart() {
+            log('Testing add to cart...');
+            
+            // Check current URL
+            log('Current page URL: ' + window.location.href);
+            
+            // Test the exact URL the JavaScript would use
+            const testUrl = '/api/add-to-cart/';
+            log('Testing URL: ' + testUrl);
+            
+            // Get CSRF token
+            const csrfToken = getCookie('csrftoken');
+            log('CSRF Token: ' + (csrfToken ? csrfToken.substring(0, 10) + '...' : 'Not found'));
+            
+            try {
+                const payload = {
+                    product_id: 1,
+                    quantity: 1
+                };
+                
+                log('Payload: ' + JSON.stringify(payload));
+                
+                const response = await fetch(testUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || ''
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                log('Response Status: ' + response.status + ' ' + response.statusText);
+                log('Response Headers: ' + JSON.stringify(Object.fromEntries(response.headers.entries())));
+                
+                const responseText = await response.text();
+                log('Raw Response: ' + responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(responseText);
+                    log('Parsed JSON: ' + JSON.stringify(data));
+                } catch (jsonError) {
+                    log('JSON Parse Error: ' + jsonError.message);
+                    log('This means the server returned HTML instead of JSON');
+                }
+                
+            } catch (error) {
+                log('Fetch Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
