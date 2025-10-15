@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="profile-container" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <div class="profile-header" style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="color: #4ecdc4;">Profile Cache Management</h1>
+        <p>Debugging and cache control for CloudManager profile data</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" style="background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="section" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 15px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="color: #4ecdc4; margin-bottom: 1rem;">Cache Status</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <strong>Cache Backend:</strong><br>
+                <code style="background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">
+                    {{ cache_stats.cache_backend|default:"Unknown" }}
+                </code>
+            </div>
+            <div>
+                <strong>Cache Version:</strong><br>
+                <code style="background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">
+                    {{ cache_stats.cache_version }}
+                </code>
+            </div>
+            <div>
+                <strong>Cache Timeout:</strong><br>
+                <code style="background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">
+                    {{ cache_stats.cache_timeout }} seconds
+                </code>
+            </div>
+            <div>
+                <strong>Has Cached Data:</strong><br>
+                {% if has_cached_data %}
+                    <span style="color: #28a745;">✅ Yes</span>
+                {% else %}
+                    <span style="color: #dc3545;">❌ No</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if has_cached_data %}
+            <div style="margin-bottom: 1.5rem;">
+                <strong>Last Fetch:</strong>
+                <code style="background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">
+                    {{ fetch_timestamp|default:"Unknown" }}
+                </code>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <strong>Cached Data Preview:</strong>
+                <div style="background: rgba(0, 0, 0, 0.1); padding: 1rem; border-radius: 8px; font-family: monospace; white-space: pre-wrap;">
+Blockchains: {{ cached_data_preview.total_blockchains|default:0 }}
+Controllers: {{ cached_data_preview.controller_names|length|default:0 }}
+CHAUFFEcoins: {{ cached_data_preview.total_chauffecoins|default:0 }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="section" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 15px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="color: #4ecdc4; margin-bottom: 1rem;">Cache Actions</h2>
+        
+        <form method="post" style="display: inline-block; margin-right: 1rem;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="invalidate">
+            <button type="submit" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #ff6b6b, #ee5a52); color: white; border: none; border-radius: 25px; font-weight: 600; cursor: pointer;">
+                🗑️ Invalidate Cache
+            </button>
+        </form>
+
+        <form method="post" style="display: inline-block; margin-right: 1rem;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="fetch_fresh">
+            <button type="submit" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 25px; font-weight: 600; cursor: pointer;">
+                🔄 Fetch Fresh Data
+            </button>
+        </form>
+    </div>
+
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{% url 'accounts:profile' %}" style="padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.1); color: #4ecdc4; border: 1px solid #4ecdc4; border-radius: 25px; text-decoration: none; font-weight: 600;">
+            ← Back to Profile
+        </a>
+    </div>
+</div>
+{% endblock %}

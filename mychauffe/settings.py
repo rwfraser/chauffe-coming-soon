@@ -194,6 +194,21 @@ STRIPE_CURRENCY = 'usd'
 CLOUDMANAGER_API_URL = env('CLOUDMANAGER_API_URL', default='http://localhost:5000')
 CLOUDMANAGER_TIMEOUT = env.int('CLOUDMANAGER_TIMEOUT', default=10)
 
+# Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'mychauffe-cache',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        },
+    }
+}
+
+# Profile data caching settings
+PROFILE_CACHE_TIMEOUT = env.int('PROFILE_CACHE_TIMEOUT', default=3600)  # 1 hour
+
 # Logging Configuration
 LOGGING = {
     'version': 1,

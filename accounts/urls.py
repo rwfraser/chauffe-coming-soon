@@ -10,4 +10,5 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
     path('api/blockchain-data/', views.get_blockchain_data, name='blockchain_data'),
+    path('cache-management/', views.cache_management, name='cache_management'),
 ]

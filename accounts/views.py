@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from core.models import UserProfile, License, CHAUFFEcoinTransaction, Order
 from core.services.cloudmanager_client import get_cloudmanager_client
 from .forms import EmailUserCreationForm, EmailAuthenticationForm
+from .cache_service import ProfileCacheService
 import logging
 
 
@@ -66,7 +67,7 @@ def profile(request):
         
         return redirect('accounts:profile')
     
-    # Initialize default values for immediate page load
+    # Use cached data for immediate page load - AJAX endpoint will handle fresh data
     blockchain_summary = {
         'total_blockchains': 0,
         'total_blocks': 0,
@@ -76,7 +77,14 @@ def profile(request):
         'dloid_parameters': []
     }
     
-    # We'll load CloudManager data via AJAX to avoid blocking the page
+    # Try to get cached data for immediate display (optional)
+    try:
+        cached_data = ProfileCacheService.get_cached_profile_data(request.user)
+        if cached_data and cached_data.get('blockchain_summary'):
+            blockchain_summary = cached_data['blockchain_summary']
+            logger.info(f"Using cached data for immediate profile display - user {request.user.id}")
+    except Exception as e:
+        logger.warning(f"Error loading cached data for profile page: {e}")
     
     # Keep local data for orders (payment history)
     orders = Order.objects.filter(user=request.user).select_related('product').order_by('-created_at')[:5]
@@ -101,46 +109,70 @@ def profile(request):
 
 @login_required
 def get_blockchain_data(request):
-    """AJAX endpoint to fetch CloudManager blockchain data"""
+    """AJAX endpoint to fetch CloudManager blockchain data with caching"""
     logger = logging.getLogger(__name__)
     
-    # Get or create user profile
-    user_profile, created = UserProfile.objects.get_or_create(
-        user=request.user,
-        defaults={'chauffecoins_balance': 0}
-    )
+    try:
+        # Use the caching service to get data
+        profile_data = ProfileCacheService.get_or_fetch_profile_data(request.user)
+        
+        return JsonResponse({
+            'success': not profile_data.get('blockchain_error'),
+            'blockchain_summary': profile_data['blockchain_summary'],
+            'blockchain_error': profile_data.get('blockchain_error'),
+            'cloudmanager_health': profile_data['cloudmanager_health'],
+            'connection_error': profile_data.get('connection_error', False),
+            'timeout_error': profile_data.get('timeout_error', False),
+            'cached': True,  # Indicate this data came through caching system
+            'fetch_timestamp': profile_data.get('fetch_timestamp')
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_blockchain_data for user {request.user.id}: {e}")
+        return JsonResponse({
+            'success': False,
+            'blockchain_summary': {
+                'total_blockchains': 0,
+                'total_blocks': 0,
+                'total_transactions': 0,
+                'total_chauffecoins': 0,
+                'controller_names': [],
+                'dloid_parameters': []
+            },
+            'blockchain_error': f'Error loading profile data: {str(e)}',
+            'cloudmanager_health': {'success': False},
+            'connection_error': True,
+            'timeout_error': False,
+            'cached': False
+        })
+
+
+@login_required
+def cache_management(request):
+    """Cache management endpoint for debugging and manual cache control"""
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'invalidate':
+            ProfileCacheService.invalidate_user_cache_by_user(request.user)
+            messages.success(request, 'Profile cache invalidated successfully.')
+        elif action == 'fetch_fresh':
+            ProfileCacheService.invalidate_user_cache_by_user(request.user)
+            ProfileCacheService.get_or_fetch_profile_data(request.user)
+            messages.success(request, 'Fresh profile data fetched and cached.')
+        
+        return redirect('accounts:cache_management')
     
-    # Get CloudManager client
-    cloudmanager_client = get_cloudmanager_client()
-    user_uuid = user_profile.get_uuid_string()
+    # Get cache stats and info
+    cache_stats = ProfileCacheService.get_cache_stats()
+    cached_data = ProfileCacheService.get_cached_profile_data(request.user)
     
-    # Fetch blockchain data from CloudManager API
-    blockchain_data = cloudmanager_client.get_user_blockchain_summary(user_uuid)
-    cloudmanager_health = cloudmanager_client.get_health()
-    
-    # Initialize default values
-    blockchain_summary = {
-        'total_blockchains': 0,
-        'total_blocks': 0,
-        'total_transactions': 0,
-        'total_chauffecoins': 0,
-        'controller_names': [],
-        'dloid_parameters': []
+    context = {
+        'title': 'Profile Cache Management',
+        'cache_stats': cache_stats,
+        'has_cached_data': cached_data is not None,
+        'cached_data_preview': cached_data.get('blockchain_summary', {}) if cached_data else {},
+        'fetch_timestamp': cached_data.get('fetch_timestamp') if cached_data else None
     }
-    blockchain_error = None
     
-    if blockchain_data.get('success'):
-        blockchain_summary = blockchain_data.get('summary', blockchain_summary)
-        logger.info(f"Retrieved blockchain data for user {user_uuid}: {blockchain_summary['total_blockchains']} blockchains")
-    else:
-        blockchain_error = blockchain_data.get('error', 'Unknown error fetching blockchain data')
-        logger.error(f"Failed to fetch blockchain data for user {user_uuid}: {blockchain_error}")
-    
-    return JsonResponse({
-        'success': blockchain_data.get('success', False),
-        'blockchain_summary': blockchain_summary,
-        'blockchain_error': blockchain_error,
-        'cloudmanager_health': cloudmanager_health,
-        'connection_error': blockchain_data.get('connection_error', False),
-        'timeout_error': blockchain_data.get('timeout_error', False)
-    })
+    return render(request, 'accounts/cache_management.html', context)
