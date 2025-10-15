@@ -641,6 +641,15 @@ def handle_payment_intent_failed(payment_intent):
 @login_required
 def api_test(request):
     """API testing page for CloudManager integration"""
+    # Get or create user profile to access UUID
+    user_profile, created = UserProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'chauffecoins_balance': 0}
+    )
+    
     return render(request, 'core/api_test.html', {
-        'title': 'CloudManager API Test - My Chauffe'
+        'title': 'CloudManager API Test - My Chauffe',
+        'user_uuid': user_profile.get_uuid_string(),
+        'user_first_name': request.user.first_name or 'TestUser',
+        'user_last_name': request.user.last_name or 'APITest'
     })

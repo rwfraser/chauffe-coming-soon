@@ -346,11 +346,17 @@ async function runFullApiTest() {
 }
 
 async function testBlockchainCreation() {
-    showAlert('Testing blockchain creation with sample data...', 'info');
+    showAlert('Testing blockchain creation with user UUID and profile data...', 'info');
+    
+    // Get user data from Django template
+    const userUuid = '{{ user_uuid|escapejs }}';
+    const userFirstName = '{{ user_first_name|escapejs }}';
+    const userLastName = '{{ user_last_name|escapejs }}';
     
     const testData = {
-        firstName: 'TestUser',
-        lastName: 'APITest',
+        user_uuid: userUuid,  // Include the user UUID
+        firstName: userFirstName,
+        lastName: userLastName,
         priorDloidQty: '0',
         chauffeQuantity: '0000100000',
         partnershipStatus: 'L',
@@ -362,16 +368,31 @@ async function testBlockchainCreation() {
         redeemability: 'P'
     };
     
+    displayTestResult('Test Parameters', 
+        `User UUID: ${userUuid}\n` +
+        `Name: ${userFirstName} ${userLastName}\n` +
+        `CHAUFFEcoin Quantity: ${testData.chauffeQuantity}\n` +
+        `Test blockchain name will be: API Test ${new Date().toISOString()}`, 'info');
+    
+    // Validate UUID
+    if (!userUuid || userUuid === '') {
+        showAlert('Error: User UUID is missing. Please ensure you are logged in.', 'danger');
+        displayTestResult('Blockchain Creation Test', 'Failed: No user UUID available', 'failure');
+        return;
+    }
+    
     try {
-        const result = await testClient.createBlockchain(`API Test ${new Date().toISOString()}`, testData);
+        const result = await testClient.createBlockchain(`API Test ${new Date().toISOString()}`, testData, userUuid);
         
         if (result && result.success) {
             showAlert('Blockchain creation test successful!', 'success');
             displayTestResult('Blockchain Creation Test', 
                 `✅ Successfully created test blockchain\n` +
+                `User UUID: ${userUuid}\n` +
                 `Controller: ${result.controller_name}\n` +
                 `Blockchain ID: ${result.blockchain_id}\n` +
-                `DLOID Params: ${result.dloid_params}`, 'success');
+                `DLOID Params: ${result.dloid_params}\n` +
+                `User Name: ${userFirstName} ${userLastName}`, 'success');
         } else {
             showAlert('Blockchain creation test failed', 'danger');
             displayTestResult('Blockchain Creation Test', result?.error || 'Unknown error', 'failure');
