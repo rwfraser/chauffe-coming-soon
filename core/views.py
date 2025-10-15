@@ -38,40 +38,60 @@ def about(request):
 
 
 @login_required
-def controller_generator(request):
-    """Controller name generator page"""
-    order_id = request.GET.get('order_id')
-    order = None
-    purchase_context = None
+def purchase_success(request):
+    """
+    Display purchase success page with completed orders and controller generator access
+    """
+    # Get completed orders for the current user
+    completed_orders = Order.objects.filter(
+        user=request.user,
+        status='completed'
+    ).order_by('-created_at')
     
-    if order_id:
-        try:
-            order = Order.objects.select_related('product', 'user').get(
-                id=order_id, user=request.user, status='completed'
-            )
-            
-            # Calculate license count from transaction
-            calculated_license_count = int(order.total_amount / order.product.price)
-            
-            # Validate that calculated count matches requested quantity
-            if calculated_license_count != order.quantity:
-                messages.error(request, f'Transaction validation error: Expected {order.quantity} licenses but payment is for {calculated_license_count} licenses.')
-                return redirect('core:store')
-            
-            # Get license associated with this order
-            license_obj = getattr(order, 'license', None)
-            
-            purchase_context = {
-                'order': order,
-                'license': license_obj,
-                'product': order.product,
-                'license_count': calculated_license_count,
-                'total_amount': order.total_amount,
-                'chauffecoins_earned': order.product.chauffecoins_included * order.quantity,
-                'is_post_purchase': True
-            }
-        except Order.DoesNotExist:
-            messages.error(request, 'Order not found or access denied.')
+    context = {
+        'title': 'Purchase Success',
+        'completed_orders': completed_orders,
+    }
+    
+    return render(request, 'core/purchase_success.html', context)
+
+def controller_generator(request):
+    """Controller name generator page - REQUIRES completed purchase"""
+    order_id = request.GET.get('order_id')
+    
+    # SECURITY: Controller generator is only accessible with a valid completed order
+    if not order_id:
+        messages.error(request, 'Access denied: Controller generator requires a completed purchase. Please visit our store to make a purchase first.')
+        return redirect('core:store')
+    
+    try:
+        order = Order.objects.select_related('product', 'user').get(
+            id=order_id, user=request.user, status='completed'
+        )
+    except Order.DoesNotExist:
+        messages.error(request, 'Access denied: Invalid or unauthorized order. Controller generator is only available after completing a purchase.')
+        return redirect('core:store')
+    
+    # Calculate license count from transaction
+    calculated_license_count = int(order.total_amount / order.product.price)
+    
+    # Validate that calculated count matches requested quantity
+    if calculated_license_count != order.quantity:
+        messages.error(request, f'Transaction validation error: Expected {order.quantity} licenses but payment is for {calculated_license_count} licenses.')
+        return redirect('core:store')
+    
+    # Get licenses associated with this order
+    licenses = License.objects.filter(order=order)
+    
+    purchase_context = {
+        'order': order,
+        'licenses': licenses,
+        'product': order.product,
+        'license_count': calculated_license_count,
+        'total_amount': order.total_amount,
+        'chauffecoins_earned': order.product.chauffecoins_included * order.quantity,
+        'is_post_purchase': True
+    }
     
     # Get or create user profile to access UUID
     user_profile, created = UserProfile.objects.get_or_create(
@@ -378,7 +398,7 @@ def create_payment_intent(request):
         payment_intent = stripe.PaymentIntent.confirm(
             payment_intent.id,
             payment_method=payment_method_id,
-            return_url=request.build_absolute_uri('/controller-generator/')
+            return_url=request.build_absolute_uri('/dashboard/')
         )
         
         # Update orders with payment intent ID

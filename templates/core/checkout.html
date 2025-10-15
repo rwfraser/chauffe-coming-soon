@@ -452,8 +452,8 @@ form.addEventListener('submit', async function(event) {
             showAlert(confirmError.message, 'error');
             resetButton();
         } else {
-            // Payment succeeded, redirect to controller generator
-            window.location.href = `{% url "core:controller_generator" %}?order_id=${data.order_id}`;
+            // Payment succeeded, redirect to purchase success page
+            window.location.href = `{% url "core:purchase_success" %}`;
         }
         
     } catch (error) {

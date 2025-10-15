@@ -171,6 +171,18 @@
     margin-bottom: 1rem;
 }
 
+.loading-spinner {
+    display: inline-block;
+    animation: spin 2s linear infinite;
+    color: #4ecdc4;
+    font-size: 1.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .alert {
     padding: 1rem;
     margin-bottom: 1rem;
@@ -292,15 +304,21 @@
     <!-- Stats Overview -->
     <div class="profile-stats">
         <div class="stat-card">
-            <div class="stat-number">{{ blockchain_summary.total_blockchains }}</div>
+            <div class="stat-number" id="stat-blockchains">
+                <div class="loading-spinner">⟳</div>
+            </div>
             <div class="stat-label">Active Blockchains</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ blockchain_summary.controller_names|length }}</div>
+            <div class="stat-number" id="stat-controllers">
+                <div class="loading-spinner">⟳</div>
+            </div>
             <div class="stat-label">Controller Names</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ blockchain_summary.total_chauffecoins|floatformat:0 }}</div>
+            <div class="stat-number" id="stat-chauffecoins">
+                <div class="loading-spinner">⟳</div>
+            </div>
             <div class="stat-label">Total CHAUFFEcoins</div>
         </div>
         <div class="stat-card">
@@ -314,52 +332,27 @@
         <div class="section-header">
             <h2>Your Blockchain Controllers</h2>
             <div>
-                {% if cloudmanager_health.success %}
-                    <span style="color: #28a745; font-size: 0.9rem; margin-right: 1rem;">✅ CloudManager Online</span>
-                {% else %}
-                    <span style="color: #dc3545; font-size: 0.9rem; margin-right: 1rem;">❌ CloudManager Offline</span>
-                {% endif %}
-                <a href="{% url 'core:controller_generator' %}" class="btn btn-primary">Generate New Controller</a>
+                <span id="cloudmanager-status" style="font-size: 0.9rem; margin-right: 1rem;">
+                    <div class="loading-spinner">⟳</div> Checking CloudManager...
+                </span>
+                <a href="{% url 'core:store' %}" class="btn btn-primary">Purchase License</a>
             </div>
         </div>
         
-        {% if blockchain_error %}
-            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #f5c6cb;">
-                <strong>⚠️ CloudManager Error:</strong> {{ blockchain_error }}
-                <br><small>Unable to fetch blockchain data. Please check that CloudManager.py is running on port 5000.</small>
-            </div>
-        {% endif %}
+        <div id="blockchain-error" style="display: none; background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #f5c6cb;">
+            <strong>⚠️ CloudManager Error:</strong> <span id="error-message"></span>
+            <br><small>Unable to fetch blockchain data. Please check that CloudManager.py is running on port 5000.</small>
+        </div>
         
-        {% if blockchain_summary.controller_names %}
-            {% for controller in blockchain_summary.controller_names %}
-            <div class="license-card">
-                <div class="license-header">
-                    <div>
-                        <h4>Controller <span class="license-number">{{ controller.controller_name }}</span></h4>
-                        <p>{{ controller.blockchain_name }}</p>
-                        <small>Blockchain ID: {{ controller.blockchain_id|truncatechars:20 }}</small>
-                    </div>
-                    <div class="status-badge status-active">
-                        {{ controller.controller_role|capfirst }}
-                    </div>
-                </div>
-                
-                <div class="license-details">
-                    <p><strong>Created:</strong> {{ controller.created_at|date:"F j, Y g:i A" }}</p>
-                    <p><strong>Role:</strong> {{ controller.controller_role|capfirst }}</p>
-                    <p><strong>Controller Name:</strong> <code style="background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">{{ controller.controller_name }}</code></p>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <h3>No blockchain controllers yet</h3>
-                <p>Generate your first blockchain controller to get started with CHAUFFE!</p>
-                <div style="margin-top: 1rem;">
-                    <a href="{% url 'core:controller_generator' %}" class="btn btn-primary">Generate Controller</a>
-                </div>
-            </div>
-        {% endif %}
+        <div id="controllers-loading" class="empty-state">
+            <div class="loading-spinner" style="font-size: 2rem; margin-bottom: 1rem;">⟳</div>
+            <h3>Loading blockchain controllers...</h3>
+            <p>Fetching data from CloudManager, please wait...</p>
+        </div>
+        
+        <div id="controllers-content" style="display: none;">
+            <!-- Will be populated by JavaScript -->
+        </div>
     </div>
 
     <!-- DLOID Parameters Section -->
@@ -369,29 +362,15 @@
             <span>Blockchain Asset Identifiers</span>
         </div>
         
-        {% if blockchain_summary.dloid_parameters %}
-            {% for dloid in blockchain_summary.dloid_parameters %}
-            <div class="transaction-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <h4>DLOID {{ forloop.counter }}</h4>
-                        <p><strong>Blockchain:</strong> {{ dloid.blockchain_id|truncatechars:20 }}</p>
-                        <p><strong>DLOID Hex:</strong> <code style="font-family: monospace; background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">{{ dloid.dloid_hex|truncatechars:20 }}</code></p>
-                        <p><strong>Parameters:</strong> <code style="font-family: monospace; background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">{{ dloid.dloid_params }}</code></p>
-                        <small>Created: {{ dloid.created_at|date:"F j, Y g:i A" }}</small>
-                    </div>
-                    <div>
-                        <div class="status-badge status-active">Active</div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty-state">
-                <h3>No DLOID parameters yet</h3>
-                <p>Generate a blockchain controller to create your first DLOID parameters.</p>
-            </div>
-        {% endif %}
+        <div id="dloid-loading" class="empty-state">
+            <div class="loading-spinner" style="font-size: 2rem; margin-bottom: 1rem;">⟳</div>
+            <h3>Loading DLOID parameters...</h3>
+            <p>Fetching blockchain asset data...</p>
+        </div>
+        
+        <div id="dloid-content" style="display: none;">
+            <!-- Will be populated by JavaScript -->
+        </div>
     </div>
 
     <!-- Recent Transactions -->
@@ -456,7 +435,7 @@
 
     <!-- Actions -->
     <div style="text-align: center; margin-top: 3rem;">
-        <a href="{% url 'core:controller_generator' %}" class="btn btn-primary">Generate Controller</a>
+        <a href="{% url 'core:store' %}" class="btn btn-primary">Visit Store</a>
         <a href="{% url 'core:api_test' %}" class="btn btn-secondary">Test CloudManager API</a>
         <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
     </div>
@@ -497,5 +476,142 @@ function copyUUID() {
         }, 2000);
     });
 }
+
+// Load blockchain data asynchronously
+function loadBlockchainData() {
+    fetch('{% url "accounts:blockchain_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Blockchain data loaded:', data);
+            
+            // Update stats
+            document.getElementById('stat-blockchains').innerHTML = data.blockchain_summary.total_blockchains;
+            document.getElementById('stat-controllers').innerHTML = data.blockchain_summary.controller_names.length;
+            document.getElementById('stat-chauffecoins').innerHTML = Math.floor(data.blockchain_summary.total_chauffecoins);
+            
+            // Update CloudManager status
+            const statusElement = document.getElementById('cloudmanager-status');
+            if (data.cloudmanager_health.success) {
+                statusElement.innerHTML = '<span style="color: #28a745;">✅ CloudManager Online</span>';
+            } else {
+                statusElement.innerHTML = '<span style="color: #dc3545;">❌ CloudManager Offline</span>';
+            }
+            
+            // Handle errors
+            if (data.blockchain_error) {
+                document.getElementById('blockchain-error').style.display = 'block';
+                document.getElementById('error-message').textContent = data.blockchain_error;
+            }
+            
+            // Update controllers section
+            document.getElementById('controllers-loading').style.display = 'none';
+            document.getElementById('controllers-content').style.display = 'block';
+            
+            const controllersHtml = renderControllers(data.blockchain_summary.controller_names);
+            document.getElementById('controllers-content').innerHTML = controllersHtml;
+            
+            // Update DLOID section
+            document.getElementById('dloid-loading').style.display = 'none';
+            document.getElementById('dloid-content').style.display = 'block';
+            
+            const dloidHtml = renderDloidParameters(data.blockchain_summary.dloid_parameters);
+            document.getElementById('dloid-content').innerHTML = dloidHtml;
+            
+        })
+        .catch(error => {
+            console.error('Error loading blockchain data:', error);
+            
+            // Show error state
+            document.getElementById('stat-blockchains').innerHTML = '❌';
+            document.getElementById('stat-controllers').innerHTML = '❌';
+            document.getElementById('stat-chauffecoins').innerHTML = '❌';
+            document.getElementById('cloudmanager-status').innerHTML = '<span style="color: #dc3545;">❌ Connection Failed</span>';
+            
+            document.getElementById('controllers-loading').innerHTML = `
+                <div class="empty-state">
+                    <h3 style="color: #dc3545;">❌ Connection Error</h3>
+                    <p>Unable to connect to CloudManager. Please try refreshing the page.</p>
+                </div>
+            `;
+            
+            document.getElementById('dloid-loading').innerHTML = `
+                <div class="empty-state">
+                    <h3 style="color: #dc3545;">❌ Connection Error</h3>
+                    <p>Unable to load DLOID parameters.</p>
+                </div>
+            `;
+        });
+}
+
+function renderControllers(controllers) {
+    if (!controllers || controllers.length === 0) {
+        return `
+            <div class="empty-state">
+                <h3>No blockchain controllers yet</h3>
+                <p>Purchase a DLO license to generate your first blockchain controller!</p>
+                <div style="margin-top: 1rem;">
+                    <a href="{% url 'core:store' %}" class="btn btn-primary">Visit Store</a>
+                </div>
+            </div>
+        `;
+    }
+    
+    return controllers.map(controller => `
+        <div class="license-card">
+            <div class="license-header">
+                <div>
+                    <h4>Controller <span class="license-number">${controller.controller_name}</span></h4>
+                    <p>${controller.blockchain_name || 'N/A'}</p>
+                    <small>Blockchain ID: ${controller.blockchain_id ? controller.blockchain_id.substring(0, 20) + '...' : 'N/A'}</small>
+                </div>
+                <div class="status-badge status-active">
+                    ${controller.controller_role ? controller.controller_role.charAt(0).toUpperCase() + controller.controller_role.slice(1) : 'Active'}
+                </div>
+            </div>
+            
+            <div class="license-details">
+                <p><strong>Created:</strong> ${controller.created_at ? new Date(controller.created_at).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Role:</strong> ${controller.controller_role ? controller.controller_role.charAt(0).toUpperCase() + controller.controller_role.slice(1) : 'N/A'}</p>
+                <p><strong>Controller Name:</strong> <code style="background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">${controller.controller_name}</code></p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderDloidParameters(dloidParams) {
+    if (!dloidParams || dloidParams.length === 0) {
+        return `
+            <div class="empty-state">
+                <h3>No DLOID parameters yet</h3>
+                <p>Purchase a DLO license to create your first blockchain with DLOID parameters.</p>
+                <div style="margin-top: 1rem;">
+                    <a href="{% url 'core:store' %}" class="btn btn-primary">Visit Store</a>
+                </div>
+            </div>
+        `;
+    }
+    
+    return dloidParams.map((dloid, index) => `
+        <div class="transaction-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h4>DLOID ${index + 1}</h4>
+                    <p><strong>Blockchain:</strong> ${dloid.blockchain_id ? dloid.blockchain_id.substring(0, 20) + '...' : 'N/A'}</p>
+                    <p><strong>DLOID Hex:</strong> <code style="font-family: monospace; background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">${dloid.dloid_hex ? dloid.dloid_hex.substring(0, 20) + '...' : 'N/A'}</code></p>
+                    <p><strong>Parameters:</strong> <code style="font-family: monospace; background: rgba(78, 205, 196, 0.1); padding: 2px 4px; border-radius: 3px;">${dloid.dloid_params || 'N/A'}</code></p>
+                    <small>Created: ${dloid.created_at ? new Date(dloid.created_at).toLocaleDateString() : 'N/A'}</small>
+                </div>
+                <div>
+                    <div class="status-badge status-active">Active</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load blockchain data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadBlockchainData();
+});
 </script>
 {% endblock %}
