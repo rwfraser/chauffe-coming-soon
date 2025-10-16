@@ -38,7 +38,19 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-mychauffe-dev-key-change
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['mychauffe.com', 'www.mychauffe.com', 'localhost', '*************', '.fly.dev', '*'])
+# Build ALLOWED_HOSTS with all possible variations
+ALLOWED_HOSTS_DEFAULT = [
+    'mychauffe.com', 
+    'www.mychauffe.com', 
+    'localhost', 
+    '127.0.0.1',
+    '172.19.13.26',  # Fly.io shared IP
+    'chauffe-coming-soon.fly.dev',
+    '.fly.dev', 
+    '*'  # Allow all hosts as fallback (can be restricted later)
+]
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=ALLOWED_HOSTS_DEFAULT)
 
 
 # Application definition
