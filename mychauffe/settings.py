@@ -38,7 +38,7 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-mychauffe-dev-key-change
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['mychauffe.com', 'www.mychauffe.com', 'localhost', '127.0.0.1', '.fly.dev', '*'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['mychauffe.com', 'www.mychauffe.com', 'localhost', '*************', '.fly.dev', '*'])
 
 
 # Application definition
