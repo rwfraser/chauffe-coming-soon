@@ -203,8 +203,8 @@ STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
 STRIPE_CURRENCY = 'usd'
 
 # CloudManager API Configuration
-CLOUDMANAGER_API_URL = env('CLOUDMANAGER_API_URL', default='http://localhost:5000')
-CLOUDMANAGER_TIMEOUT = env.int('CLOUDMANAGER_TIMEOUT', default=10)
+CLOUDMANAGER_API_URL = env('CLOUDMANAGER_API_URL', default='https://pychain.fly.dev')
+CLOUDMANAGER_TIMEOUT = env.int('CLOUDMANAGER_TIMEOUT', default=30)
 
 # Caching Configuration
 CACHES = {

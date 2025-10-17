@@ -279,9 +279,16 @@ let testClient = null;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Create test client
-    testClient = window.blockchainClient || blockchainClient || new BlockchainClient('http://localhost:5000');
-    console.log('API Test Suite initialized');
+    // Create test client - use the same URL logic as blockchain-client.js
+    let apiUrl;
+    if (window.location.hostname.includes('localhost')) {
+        apiUrl = 'http://localhost:5000';
+    } else {
+        apiUrl = 'https://pychain.fly.dev';
+    }
+    
+    testClient = window.blockchainClient || blockchainClient || new BlockchainClient(apiUrl);
+    console.log('API Test Suite initialized with URL:', apiUrl);
     
     // Set website version info
     document.getElementById('website-version').textContent = '2.0.0';

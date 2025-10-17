@@ -270,8 +270,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Development environment
         apiUrl = 'http://localhost:5000';
     } else {
-        // Production environment - use relative URLs to work with Django
-        apiUrl = '';
+        // Production environment - use CloudManager.py on Fly.io
+        apiUrl = 'https://pychain.fly.dev';
     }
         
     blockchainClient = new BlockchainClient(apiUrl);

@@ -28,6 +28,7 @@ primary_region = 'ord'
   DEBUG = "false"
   DJANGO_SETTINGS_MODULE = "mychauffe.settings"
   ALLOWED_HOSTS = "mychauffe.com,www.mychauffe.com,localhost,127.0.0.1,172.19.13.26,************,chauffe-coming-soon.fly.dev,.fly.dev,*"
+  CLOUDMANAGER_API_URL = "https://pychain.fly.dev"
 
 [[vm]]
   memory = '1gb'
